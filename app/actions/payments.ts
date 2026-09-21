@@ -3,6 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { getSignedReceiptUrl } from "@/lib/supabase/storage";
+
+export type ReceiptUrlResult = { error: string } | { url: string };
+
+// Admin-only: returns a 60-second signed URL for a receipt in the private bucket.
+export async function getReceiptUrl(path: string): Promise<ReceiptUrlResult> {
+  try {
+    return { url: await getSignedReceiptUrl(path) };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to load receipt" };
+  }
+}
 
 export type SubmitPaymentResult = { error: string } | { success: true };
 

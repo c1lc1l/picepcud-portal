@@ -6,15 +6,41 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
-
-const metrics = [
-  { title: "Total Members", description: "Registered profiles" },
-  { title: "Pending Payments", description: "Awaiting review" },
-  { title: "Active Events", description: "Currently published" },
-];
+import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminDashboardPage() {
   const { profile } = await getCurrentUser();
+  const supabase = await createClient();
+
+  const [members, pending, events] = await Promise.all([
+    supabase.from("profiles").select("*", { count: "exact", head: true }),
+    supabase
+      .from("payments")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending"),
+    supabase
+      .from("events")
+      .select("*", { count: "exact", head: true })
+      .eq("is_active", true),
+  ]);
+
+  const metrics = [
+    {
+      title: "Total Members",
+      description: "Registered profiles",
+      value: members.count,
+    },
+    {
+      title: "Pending Payments",
+      description: "Awaiting review",
+      value: pending.count,
+    },
+    {
+      title: "Active Events",
+      description: "Currently published",
+      value: events.count,
+    },
+  ];
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
@@ -29,7 +55,7 @@ export default async function AdminDashboardPage() {
           <Card key={m.title}>
             <CardHeader>
               <CardDescription>{m.title}</CardDescription>
-              <CardTitle className="text-3xl">--</CardTitle>
+              <CardTitle className="text-3xl">{m.value ?? "--"}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
               {m.description}

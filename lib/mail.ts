@@ -3,8 +3,10 @@ import PaymentApprovedEmail from "@/emails/PaymentApprovedEmail";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Sandbox sender; swap for a verified domain address in production.
-const FROM = "PICE PCUD <onboarding@resend.dev>";
+// Falls back to Resend's sandbox sender, which only delivers to the Resend
+// account owner. Set RESEND_FROM_EMAIL to an address on a verified domain.
+const FROM =
+  process.env.RESEND_FROM_EMAIL ?? "PICE PCUD <onboarding@resend.dev>";
 
 export interface SendPaymentApprovalEmailParams {
   to: string;
