@@ -14,14 +14,36 @@ const PROTECTED = [
 
 test.describe("route protection (signed out)", () => {
   for (const path of PROTECTED) {
-    test(`${path} redirects to /login`, async ({ page }) => {
+    test(`${path} redirects to /login and remembers the page`, async ({
+      page,
+    }) => {
       await page.goto(path);
-      await expect(page).toHaveURL(/\/login$/);
+      const url = new URL(page.url());
+      expect(url.pathname).toBe("/login");
+      expect(url.searchParams.get("next")).toBe(path);
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(
         /Log in/i,
       );
     });
   }
+
+  test("the query string survives the round trip", async ({ page }) => {
+    await page.goto("/admin/payments?status=approved&page=2");
+    expect(new URL(page.url()).searchParams.get("next")).toBe(
+      "/admin/payments?status=approved&page=2",
+    );
+  });
+
+  test("a hostile next value still renders the login page", async ({
+    page,
+  }) => {
+    for (const next of ["//evil.example", "https://evil.example", "/\\evil"]) {
+      await page.goto(`/login?next=${encodeURIComponent(next)}`);
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+        /Log in/i,
+      );
+    }
+  });
 
   test("GCash QR route refuses anonymous requests", async ({ request }) => {
     const res = await request.get("/payments/gcash-qr", { maxRedirects: 0 });

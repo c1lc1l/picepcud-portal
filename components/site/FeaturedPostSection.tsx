@@ -21,7 +21,7 @@ export function FeaturedPostSection({ post }: { post: FeaturedPost }) {
           />
         )}
         <div className={post.image_url ? "" : "md:col-span-2"}>
-          <p className="font-wide text-[0.65rem] uppercase tracking-[0.14em] text-brand-violet">
+          <p className="font-wide text-[0.7rem] uppercase tracking-[0.14em] text-brand-violet">
             Featured
           </p>
           <h2

@@ -16,7 +16,14 @@ import { Input } from "@/components/ui/input";
 import { signIn } from "@/app/actions/auth";
 import { loginSchema, type LoginValues } from "@/lib/validations/auth";
 
-export function LoginForm({ registered }: { registered: boolean }) {
+export function LoginForm({
+  registered,
+  next,
+}: {
+  registered: boolean;
+  /** Same-site path to return to after logging in (already validated). */
+  next: string;
+}) {
   const [serverError, setServerError] = useState<string>();
   const [pending, startTransition] = useTransition();
   const {
@@ -29,6 +36,7 @@ export function LoginForm({ registered }: { registered: boolean }) {
     setServerError(undefined);
     const fd = new FormData();
     Object.entries(values).forEach(([k, v]) => fd.append(k, String(v)));
+    fd.append("next", next);
     startTransition(async () => {
       const res = await signIn(fd);
       if (res?.error) setServerError(res.error);

@@ -197,7 +197,7 @@ export default async function Home() {
                     Chapter officers
                   </h2>
                   {roster.settings?.term_label && (
-                    <p className="mt-3 font-wide text-[0.65rem] uppercase tracking-[0.14em] text-brand-violet">
+                    <p className="mt-3 font-wide text-[0.7rem] uppercase tracking-[0.14em] text-brand-violet">
                       Executive board · {roster.settings.term_label}
                     </p>
                   )}

@@ -12,9 +12,11 @@ import {
   type PaymentStatus,
 } from "@/components/admin/PaymentsTable";
 import { GcashUploadDialog } from "@/components/payments/GcashUploadDialog";
+import { EditProfileDialog } from "@/components/portal/EditProfileDialog";
 import { PortalHeader } from "@/components/portal/PortalHeader";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -121,7 +123,7 @@ export default async function DashboardPage() {
           Welcome{firstName ? `, ${firstName}` : ""}
         </h1>
         {profile && (
-          <p className="mt-3 font-wide text-[0.6rem] uppercase tracking-[0.14em] text-brand-ink">
+          <p className="mt-3 font-wide text-[0.7rem] uppercase tracking-[0.14em] text-brand-ink">
             {profile.student_id}
             {year && ` · ${year}`}
           </p>
@@ -231,6 +233,11 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Your details</CardTitle>
+              {profile && (
+                <CardAction>
+                  <EditProfileDialog profile={profile} email={user?.email} />
+                </CardAction>
+              )}
             </CardHeader>
             <CardContent>
               <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
@@ -269,7 +276,7 @@ export default async function DashboardPage() {
                     return (
                       <li key={ev.id} className="flex gap-3">
                         <div className="w-11 shrink-0 text-center text-brand-indigo">
-                          <p className="font-wide text-[0.55rem] uppercase tracking-widest">
+                          <p className="font-wide text-[0.7rem] uppercase tracking-widest">
                             {d.month}
                           </p>
                           <p className="font-display text-3xl leading-none font-extrabold">

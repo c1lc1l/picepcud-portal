@@ -20,6 +20,36 @@ test.describe("logo images are sized for their slot", () => {
     });
   }
 
+  // Regression: highlight photos (stored up to 1600 px) were sent raw into
+  // ~224 px cards.
+  test("highlight cards load card-sized images", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    const raw: string[] = [];
+    const optimized: number[] = [];
+    page.on("request", (req) => {
+      const url = new URL(req.url());
+      if (url.pathname.includes("/object/public/highlight-photos/")) {
+        raw.push(url.pathname);
+      } else if (
+        url.pathname === "/_next/image" &&
+        url.searchParams.get("url")?.includes("highlight-photos")
+      ) {
+        optimized.push(Number(url.searchParams.get("w")));
+      }
+    });
+    await page.goto("/", { waitUntil: "networkidle" });
+    test.skip(
+      (await page.getByRole("heading", { name: "Check these out!" }).count()) === 0,
+      "No highlights are published",
+    );
+    await page.getByRole("heading", { name: "Check these out!" }).scrollIntoViewIfNeeded();
+    // Card images are lazy: wait for them to start loading after the scroll.
+    await expect.poll(() => optimized.length).toBeGreaterThan(0);
+    await page.waitForLoadState("networkidle");
+    expect(raw).toEqual([]);
+    expect(Math.max(...optimized)).toBeLessThanOrEqual(640);
+  });
+
   test("no layout shift while the home page loads", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 800 });
     await page.goto("/", { waitUntil: "networkidle" });

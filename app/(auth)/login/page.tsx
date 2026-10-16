@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { safeNextPath } from "@/lib/safe-next";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
@@ -7,6 +8,11 @@ export const metadata: Metadata = {
 };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
-  const { registered } = await searchParams;
-  return <LoginForm registered={registered === "1"} />;
+  const { registered, next } = await searchParams;
+  return (
+    <LoginForm
+      registered={registered === "1"}
+      next={safeNextPath(typeof next === "string" ? next : undefined)}
+    />
+  );
 }

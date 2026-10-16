@@ -13,6 +13,30 @@ test.describe("no sideways scrolling", () => {
   }
 });
 
+// Regression: officer titles were cut off inside their cards on phones
+// (the card clips, so the page never scrolled sideways to reveal it).
+test.describe("officer titles are never clipped", () => {
+  for (const width of [320, 360, 375, 430, 768]) {
+    test(`at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/officers");
+      const titles = page.locator("button span.font-wide");
+      test.skip((await titles.count()) === 0, "Officer roster is not published");
+      const clipped = await titles.evaluateAll((spans) =>
+        spans
+          .filter((s) => {
+            const range = document.createRange();
+            range.selectNodeContents(s);
+            const right = s.getBoundingClientRect().right;
+            return [...range.getClientRects()].some((r) => r.right > right + 1);
+          })
+          .map((s) => s.textContent),
+      );
+      expect(clipped).toEqual([]);
+    });
+  }
+});
+
 test.describe("mobile navigation", () => {
   test.use({ viewport: { width: 375, height: 800 } });
 

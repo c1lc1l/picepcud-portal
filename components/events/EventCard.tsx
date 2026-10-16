@@ -17,7 +17,7 @@ export function EventCard({ event }: { event: PublicEvent }) {
       )}
       <div className="flex gap-6">
         <div className="w-20 shrink-0 border-r border-border pr-5 text-brand-indigo">
-          <p className="font-wide text-[0.65rem] uppercase tracking-[0.12em]">
+          <p className="font-wide text-[0.7rem] uppercase tracking-[0.12em]">
             {d.month}
           </p>
           <p className="font-display text-6xl leading-none font-extrabold">

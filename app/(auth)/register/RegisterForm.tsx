@@ -33,7 +33,7 @@ function FieldGroup({
 }) {
   return (
     <fieldset className="flex flex-col gap-5">
-      <legend className="mb-4 font-wide text-[0.6rem] uppercase tracking-[0.14em] text-brand-violet">
+      <legend className="mb-4 font-wide text-[0.7rem] uppercase tracking-[0.14em] text-brand-violet">
         {legend}
       </legend>
       {children}

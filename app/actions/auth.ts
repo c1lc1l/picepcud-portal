@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { safeNextPath } from "@/lib/safe-next";
 import { createClient } from "@/lib/supabase/server";
 import {
   forgotPasswordSchema,
@@ -44,7 +45,8 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { error: error.message };
 
-  redirect("/dashboard");
+  // Back to the page that sent them to login, if it's on this site.
+  redirect(safeNextPath(formData.get("next")));
 }
 
 export async function signOut() {
@@ -53,9 +55,19 @@ export async function signOut() {
   redirect("/login");
 }
 
-/** Public origin for auth email links; prefer the configured site URL. */
+/**
+ * Public origin for auth email links. Prefers the configured site URL, then
+ * Vercel's production domain, and only falls back to request headers (which
+ * a client can influence) in development or previews.
+ */
 async function siteUrl() {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (
+    process.env.VERCEL_ENV === "production" &&
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
   const h = await headers();
   return h.get("origin") ?? `https://${h.get("host")}`;
 }

@@ -53,7 +53,9 @@ export function OfficerProfileCard({ officer }: { officer: Officer }) {
             <span className="block font-display text-xl leading-tight font-bold text-brand-ink sm:text-2xl">
               {officer.display_name}
             </span>
-            <span className="block font-wide text-[0.6rem] leading-relaxed uppercase tracking-[0.12em] text-brand-violet">
+            {/* Tighter tracking in the two-up phone grid so long words like
+                "Chairperson" fit; they wrap rather than clip below 360px. */}
+            <span className="block font-wide text-[0.7rem] leading-relaxed uppercase tracking-[0.04em] wrap-break-word text-brand-violet sm:tracking-[0.12em]">
               {officer.title}
             </span>
             <span className="mt-auto inline-flex items-center gap-1 pt-2 text-xs font-medium text-muted-foreground transition-colors duration-500 ease-smooth group-hover:text-brand-indigo">
@@ -78,14 +80,14 @@ export function OfficerProfileCard({ officer }: { officer: Officer }) {
             <div className="flex flex-col gap-5 p-6">
               <div>
                 {group && (
-                  <p className="font-wide text-[0.55rem] uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className="font-wide text-[0.7rem] uppercase tracking-[0.14em] text-muted-foreground">
                     {group.label}
                   </p>
                 )}
                 <DialogTitle className="mt-2 font-display text-3xl leading-tight font-bold text-brand-ink">
                   {officer.display_name}
                 </DialogTitle>
-                <DialogDescription className="mt-1 font-wide text-[0.65rem] uppercase tracking-[0.12em] text-brand-violet">
+                <DialogDescription className="mt-1 font-wide text-[0.7rem] uppercase tracking-[0.12em] text-brand-violet">
                   {officer.title}
                 </DialogDescription>
               </div>

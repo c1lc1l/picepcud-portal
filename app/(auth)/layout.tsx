@@ -33,7 +33,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
               <p className="font-display text-3xl leading-none font-extrabold uppercase text-brand-ink">
                 PICE PCUD
               </p>
-              <p className="mt-1.5 font-wide text-[0.55rem] leading-relaxed uppercase tracking-[0.12em] text-brand-ink">
+              <p className="mt-1.5 font-wide text-[0.7rem] leading-relaxed uppercase tracking-[0.12em] text-brand-ink">
                 PCU–Dasmariñas Student Chapter
               </p>
             </div>
@@ -56,7 +56,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
               of Civil Engineers
             </p>
             <hr className="chrome-rule my-5 w-64" />
-            <p className="font-wide text-[0.6rem] leading-relaxed uppercase tracking-[0.12em] text-brand-ink">
+            <p className="font-wide text-[0.7rem] leading-relaxed uppercase tracking-[0.12em] text-brand-ink">
               Philippine Christian University – Dasmariñas
               <br />
               Student Chapter

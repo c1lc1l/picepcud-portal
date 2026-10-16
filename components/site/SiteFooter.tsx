@@ -13,7 +13,7 @@ export async function SiteFooter() {
           <p className="font-display text-3xl font-extrabold uppercase leading-none tracking-wide text-white">
             PICE PCUD
           </p>
-          <p className="mt-3 font-wide text-[0.6rem] uppercase leading-relaxed tracking-[0.14em]">
+          <p className="mt-3 font-wide text-[0.7rem] uppercase leading-relaxed tracking-[0.14em]">
             Philippine Institute of Civil Engineers
             <br />
             Philippine Christian University – Dasmariñas

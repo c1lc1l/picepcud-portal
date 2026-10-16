@@ -1,6 +1,6 @@
 # QA Report — PICE PCUD Portal
 
-**Audit date:** 2026-10-17 · **Branch:** `main` (from `edbd0f1`, changes uncommitted) · **Build under test:** Next.js 16.3.8 production build (`next build && next start`)
+**Audit date:** 2026-10-17 (audit, then a follow-up round the same day; see §8) · **Branch:** `main` · **Build under test:** Next.js 16.3.8 production build (`next build && next start`)
 
 ---
 
@@ -17,8 +17,13 @@ The portal is in good shape for a project of its size. The code is careful: serv
    - an unbranded, dead-end 404 page and no error page;
    - an oversized logo image that was the mobile LCP element;
    - several accessibility defects.
+4. **Follow-up round (§8):**
+   - Members can now edit their own profile from the dashboard.
+   - The @pcu.edu.ph rule and duplicate-reference protection are written as database migrations.
+   - QA-11 to QA-19 are addressed: fixed in code, or written as migrations that still need applying.
+   - QA-20, an officer-title clipping bug found along the way, is fixed.
 
-**Recommendation: CONDITIONAL.** The site can launch once QA-01's migration is applied and the authenticated smoke test in §6 has been run. See §7.
+**Recommendation: CONDITIONAL.** The site can launch once the migrations in §6.1 (QA-01 at minimum) are applied and the authenticated smoke test in §6 has been run. See §7.
 
 ---
 
@@ -171,45 +176,77 @@ Severity reflects impact on this app's users and data. Status meanings: **Fixed*
 - **Problem:** `gcash-receipts` was created without `file_size_limit` or `allowed_mime_types`. The app compresses screenshots to ~200 KB WebP, but a member can upload any file of any size into their own folder through the API.
 - **Fix:** The QA-01 migration limits the bucket to WebP/JPEG/PNG up to 2 MB.
 
-### QA-11 · Medium · Members can rewrite their own profile (student ID, name, year) via the API — **Open**
-- **Where:** policy `profiles_update_own`.
-- **Problem:** No screen lets members edit their profile, but the policy allows it. A member could change their `student_id` or name after a payment is approved, which undermines the roster export.
-- **Recommendation:** Drop `profiles_update_own`, or limit it to harmless columns with a trigger. No app code updates `profiles` (verified by search). It wasn't changed here because it's a product decision.
+> QA-11 to QA-19 were resolved in a follow-up round on 2026-10-17 (see §8). Each entry below shows the original finding and its outcome.
 
-### QA-12 · Medium · PCU-email restriction is enforced only in the app — **Open** (already an open question in the handoff notes)
-- **Problem:** `@pcu.edu.ph` is checked by zod in the server actions. Anyone can still call Supabase `signUp` directly with the public anon key and any address.
-- **Recommendation:** Enforce it in the database, either with a domain check in `handle_new_user()` or a Supabase "before user created" auth hook. Before doing so, decide whether admin accounts on other domains need an allowlist.
+### QA-11 · Medium · Member profile self-editing — **Decided: allowed. Built, with guards written**
+- **Finding:** The `profiles_update_own` policy let members edit their profile through the API, with no screen for it.
+- **Decision (2026-10-17):** Members may edit their own profile.
+- **Done:**
+  - **Edit form:** the dashboard's *Your details* card has an **Edit** dialog for full name, student ID and year level. Email is read-only because it's the login.
+  - **Server action:** `updateOwnProfile` validates with the same rules as registration, updates only the caller's own row, and reports a duplicate student ID in plain words.
+  - **Role:** cannot change; the existing `protect_profile_role` trigger blocks it.
+  - **Guard migration** (`20261023_profile_self_edit_guards.sql`, **not applied**): members can't rewrite `created_at`, and names and IDs can't be blank or oversized.
+- **Residual risk (accepted):** a member can still change their student ID after a payment is approved. Officers matching payments to members should use the name and email as well.
+- **Verification:** 3 unit tests (validation, trimming, ignoring `role`/`email`). The dialog was exercised with fake data at 320 and 1440 px (prefill, Save disabled until changed, read-only email, announced errors, Cancel resets, axe clean). Saving to the live database was not exercised.
 
-### QA-13 · Low · The same GCash reference number can be submitted repeatedly — **Open**
-- **Problem:** There is no uniqueness on `payments.reference_no`. A receipt could be resubmitted by the same member or a different one, and officers must catch it by eye.
-- **Recommendation:** Add a unique index on `reference_no`, possibly excluding rejected rows, after checking existing data for duplicates. Also show "already submitted" in the dialog.
+### QA-12 · Medium · PCU-email restriction only in the app — **Fix written** (`20261022_pcu_email_domain.sql`, **not applied**)
+- **Finding:** `@pcu.edu.ph` was only checked by zod, so a direct Supabase `signUp` call with the public anon key could use any address.
+- **Fix:** A `BEFORE INSERT OR UPDATE OF email, email_change` trigger on `auth.users` rejects new accounts, and email changes, outside `pcu.edu.ph`.
+  - Existing accounts, including any admin on another domain, are untouched unless their email changes.
+  - Supabase reports a blocked sign-up as a generic "Database error saving new user". The app's own validation shows the friendly message first.
+- **Verification:** The SQL parses with PostgreSQL's parser. The function body was reviewed by hand, not executed. After applying it, try signing up with a non-PCU address through the API; it should fail.
 
-### QA-14 · Low · Reset-link origin can come from request headers — **Open** (config)
-- **Where:** `app/actions/auth.ts › siteUrl()`.
-- **Problem:** If `NEXT_PUBLIC_SITE_URL` is unset, the reset link's origin is taken from the `Origin`/`Host` header. Supabase's redirect allowlist mitigates this.
-- **Recommendation:** Set `NEXT_PUBLIC_SITE_URL` in production, and keep the Supabase redirect allowlist tight.
+### QA-13 · Low · Same GCash reference could be submitted repeatedly — **Fix written** (`20261024_payment_reference_unique.sql`, **not applied**). App side done.
+- **Fix:**
+  - **Database:** a unique index on `reference_no` across pending and approved payments. Rejected payments don't count, so a corrected receipt can reuse its reference.
+  - **Safe to run:** the migration first checks for existing duplicates and stops with instructions if it finds any, rather than half-applying.
+  - **App:** `submitPayment` turns the unique-violation error into "This GCash reference number has already been submitted…". The dialog already removes the orphaned upload on error.
 
-### QA-15 · Low · Highlight photos are served at full upload size — **Open**
-- **Problem:** Uploads are stored up to 1600 px / 0.5 MB and shown raw in ~224 px cards. One card on the home page was 491 KB, and Lighthouse estimates ~666 KB of savings.
-- **Recommendation:** Generate a ~600 px thumbnail at upload (`HighlightsManager` already compresses client-side), or serve the images through `next/image` with a `remotePatterns` entry for the Supabase storage host.
+### QA-14 · Low · Reset-link origin could come from request headers — **Fixed** (code); one config step remains
+- **Fix:** `siteUrl()` now tries, in order:
+  1. `NEXT_PUBLIC_SITE_URL`;
+  2. Vercel's `VERCEL_PROJECT_PRODUCTION_URL`, on production deploys only;
+  3. request headers, which only previews and local dev now reach.
+- **Still recommended:** set `NEXT_PUBLIC_SITE_URL` to your custom domain if you use one, and keep Supabase's redirect allowlist tight.
 
-### QA-16 · Low · Very small text — **Open** (design decision)
-- **Problem:** Lighthouse flags `text-[0.6rem]` (9.6 px) Michroma labels, such as officer titles and subtitles: 44% of text on /officers mobile is below 12 px. This isn't a WCAG failure, but it is hard to read on phones.
-- **Recommendation:** Consider 0.7rem or larger for these brand labels on small screens.
+### QA-15 · Low · Highlight photos served at full upload size — **Fixed**
+- **Fix:**
+  - **Cards:** now render through `next/image` with `sizes`.
+  - **Config:** `images.remotePatterns` allows only `https://<project>.supabase.co/storage/v1/object/public/highlight-photos/**` with no query string, so the optimizer refuses every other remote URL. `maximumRedirects: 0`.
+  - **Admin preview:** the admin form's local `blob:` preview is passed through unoptimized, which `next/image` does automatically.
+  - **Pop-up:** it still loads the full image, only when opened.
+- **Verification:**
+  - The two home-page highlight photos dropped from **491 KB + 108 KB to 48 KB + 29 KB**.
+  - Total home weight dropped from **1,688 KB to 1,163 KB** on Lighthouse mobile.
+  - Regression test: no raw highlight-photo requests, and optimized widths ≤ 640.
+  - Lab LCP didn't measurably change (7.0–7.3 s). It's dominated by load and render delay, not bytes.
 
-### QA-17 · Low · Sign-in doesn't return you to the page you asked for — **Open**
-- **Problem:** Visiting `/admin/payments` while signed out redirects to `/login` without a `next` parameter, so after login you land on `/dashboard`.
-- **Recommendation:** Add `?next=`, validated with the same same-origin check as `/auth/callback`.
+### QA-16 · Low · Very small text — **Partially resolved**
+- **Fix:** All 15 sub-0.7rem labels (0.55/0.6/0.65rem, i.e. 8.8–10.4 px) are now **0.7rem (11.2 px)**.
+- **Not fully resolved:** Lighthouse's "legible font sizes" check uses a 12 px threshold, so /officers still fails it (Best Practices 96). Reaching 12 px (0.75rem) would make the wide Michroma titles wrap badly in the two-up phone cards; see QA-20. Treat it as a brand-typography decision.
 
-### QA-18 · Low · Remaining `npm audit` highs are in build tooling — **Open**
-- **Problem:** Nine highs remain, all from one `braces` ReDoS reached via `fast-glob`/`micromatch`, inside `eslint-config-next` and the `shadcn` CLI. No fix exists without a breaking downgrade.
-- **Risk:** Glob patterns aren't attacker-controlled, so the practical risk is low.
-- **Note:** `shadcn` is in `dependencies` but is only needed at build time (`@import "shadcn/tailwind.css"`). It could move to `devDependencies` if your deploy installs dev dependencies at build time; Vercel does by default.
+### QA-17 · Low · Sign-in didn't return you to the requested page — **Fixed**
+- **Fix:**
+  - Signed-out visits to protected pages redirect to `/login?next=<path+query>`.
+  - `signIn` sends members back there after login.
+  - Already-signed-in visits to `/login?next=…` go straight there.
+  - Every `next` value goes through the new shared `lib/safe-next.ts`, which rejects other origins (`//x`, `/\x`, `https://x`, `javascript:`) and the auth pages themselves. `/auth/callback` now uses the same helper.
+- **Verification:** 3 unit tests on the helper; e2e confirms the remembered path (including the query string) on all 9 protected routes, and that hostile `next` values still render the login page normally. A successful sign-in redirect wasn't exercised (no test credentials).
 
-### QA-19 · Info · Minor code observations — **Open**
-- The password show/hide toggle changes both its label and `aria-pressed`. Pick one: a fixed "Show password" label plus `aria-pressed`.
-- `approvePayment` loads every approved payment through `admin_list_payments` to find one email address. It's fine now, but slows as the table grows.
-- The build warns about a stray `package-lock.json` in your user folder (outside the repo). Delete it, or set `turbopack.root`.
+### QA-18 · Low · `npm audit` highs in build tooling — **Mitigated**
+- `shadcn` moved to `devDependencies`: it's only a build-time CSS import, and Tailwind is already a dev dependency the build needs. **The production dependency tree now audits clean (0 vulnerabilities).**
+- 9 highs remain in dev tooling, from one `braces` ReDoS. **No patched `braces` release exists** (all versions ≤ 3.0.3 are affected, and 3.0.3 is the latest). Revisit when one ships.
+
+### QA-19 · Info · Minor code observations — **Fixed**
+- **Password toggle:** fixed label "Show password", with state conveyed by `aria-pressed`; test updated.
+- **Approval email lookup:** `approvePayment` looks up one member's email through the new admin-only `admin_payment_email` RPC (`20261025_admin_payment_email_rpc.sql`, **not applied**). Until that's applied it falls back to the old list lookup, so approvals keep working either way.
+- **Build warning:** `turbopack.root` is pinned to the project, so the stray-lockfile warning is gone. The file in your user folder was left alone.
+
+### QA-20 · Low · Officer titles clipped on small phones — **Fixed** (found during the follow-up)
+- **Where:** `components/officers/OfficerProfileCard.tsx`.
+- **Problem:** At 320 px, **even before any changes**, 4 committee titles were cut off ("CHAIRPERSO…"). The single word "Chairperson" in Michroma was wider than the two-up card. The first sweep missed it because the card clips its overflow, so the page never scrolls sideways. Raising the size for QA-16 made it worse: 7 clipped titles at 320 px and 4 at 375 px.
+- **Fix:** Below `sm`, the title uses tighter letter-spacing (0.04em, from 0.12em; unchanged from `sm` up) plus a break-word fallback. It fits whole from 360 px up. At 320 px one long word wraps onto two lines instead of losing letters.
+- **Verification:** New regression test at 320/360/375/430/768 px measures each title against its box. Zero clipped titles, and no split words from 360 px up.
 
 ---
 
@@ -240,23 +277,23 @@ No visual design changes were made apart from the new 404/error pages, which reu
 |---|---|
 | `npx tsc --noEmit` | Pass (0 errors) |
 | `npx eslint` | Pass (0 problems) |
-| `next build` (16.3.8) | Pass, 22 routes. One environment warning (stray lockfile outside the repo). |
-| `npm audit` | Before: 1 critical, 11 high. After: **0 critical**, 9 high (build tooling, QA-18). |
+| `next build` (16.3.8) | Pass, 22 routes, no warnings (the stray-lockfile warning is fixed by QA-19). |
+| `npm audit` | Before: 1 critical, 11 high. After: **0 critical**, 9 high (dev tooling only, QA-18). **Production dependencies: 0.** |
 
 ### Automated tests: `npm run build && npm run test:e2e`
 
-**93 tests in 8 files: 93 passed, 0 failed, 0 skipped.** The suite was also run with `--repeat-each=2` (178/178 on the 89 tests that existed then) with no flakes.
+**Final run (after the follow-up): 107 tests in 8 files, 107 passed, 0 failed, 0 skipped.** Repeat runs found no flakes: 204/204 with `--repeat-each=2` on the 102 tests that existed before the QA-20 test was added, and 178/178 in the first round.
 
 | File | Covers | Tests |
 |---|---|---|
 | `pages.spec.ts` | Every public page renders without console errors; navigation, back/forward, footer, external-link `rel`; link semantics; branded 404 | 21 |
-| `auth-guards.spec.ts` | 9 protected routes redirect; QR route 401; callback open-redirect ×3; expired reset link | 14 |
-| `forms.spec.ts` | Login/register/forgot validation, error announcement, input preservation, password toggle, notices | 9 |
-| `responsive.spec.ts` | No horizontal overflow on 8 pages × 7 widths; mobile menu (open, Escape, outside-tap, navigate, hidden ≥ sm) | 10 |
+| `auth-guards.spec.ts` | 9 protected routes redirect and remember the page (`?next=`), query string kept, hostile `next` values; QR route 401; callback open-redirect ×3; expired reset link | 16 |
+| `forms.spec.ts` | Login/register/forgot validation, error announcement, input preservation, password toggle (`aria-pressed`), notices | 9 |
+| `responsive.spec.ts` | No horizontal overflow on 8 pages × 7 widths; officer titles not clipped at 5 widths; mobile menu (open, Escape, outside-tap, navigate, hidden ≥ sm) | 15 |
 | `a11y.spec.ts` | axe WCAG 2.2 AA on 8 pages × 2 widths; error state; keyboard order; focus ring; officer dialog focus trap/Escape/focus return; reduced motion; carousel | 22 |
 | `security.spec.ts` | Headers on 3 pages; no service keys in HTML/JS; no tokens in storage | 5 |
-| `performance.spec.ts` | Logo sizing on 3 pages; CLS < 0.1 | 4 |
-| `unit.spec.ts` | Search sanitising, year filter, PCU email rule, register rules, hashtags, roster liveness, initials, calendar | 8 |
+| `performance.spec.ts` | Logo sizing on 3 pages; highlight photos optimized; CLS < 0.1 | 5 |
+| `unit.spec.ts` | Search sanitising, year filter, PCU email rule, register and profile rules, safe `next` paths, hashtags, roster liveness, initials, calendar | 14 |
 
 **Baseline before fixes:** 70 passed, 10 failed.
 - 8 failures were the defects above: axe ×4, the 404 page, security headers ×3.
@@ -276,7 +313,7 @@ The tests are read-only against Supabase. They never sign up, submit, upload or 
 How to read this:
 - **Lab data on a local server.** Mobile scores are Lighthouse's simulated mid-tier phone on slow 4G. Mobile LCP on Home varied 6.6–8.5 s between identical runs, partly because highlight images load from Supabase over the real network.
 - **What QA-05 did:** it removed ~200–250 KB per page, and the LCP image's load phase fell from 3.1 s to under 0.3 s.
-- **What's left:** queueing behind other downloads (mainly QA-15's large highlight photos) and render delay. Five web-font families with `latin-ext` subsets are worth reviewing.
+- **What's left:** queueing behind other downloads and render delay. QA-15 (follow-up) cut home-page weight from 1,688 KB to 1,163 KB, but lab LCP stayed at 7.0–7.3 s, so bytes aren't the main limit. Five web-font families with `latin-ext` subsets are the next thing to review.
 - **Not measured:** INP (needs field data).
 - **Already good:** desktop LCP is 0.9–1.3 s, and TBT is ≤120 ms everywhere.
 
@@ -292,21 +329,34 @@ How to read this:
 
 ## 6. Remaining risks and next steps
 
-1. **Apply `20261021_payments_insert_guard.sql`** in the Supabase SQL Editor (QA-01, QA-10). Then, with a throwaway member account, confirm a direct `status: 'approved'` insert is rejected and a normal payment still submits.
+1. **Apply the migrations** in the Supabase SQL Editor. None has been run; the only database is the live project. Each file is idempotent and independent, and the deployed code works whether or not they've been applied yet.
+
+   | Order | File | Fixes | Check afterwards |
+   |---|---|---|---|
+   | 1 (**blocking**) | `20261021_payments_insert_guard.sql` | QA-01, QA-10 | With a test member, a direct `status: 'approved'` insert is rejected; a normal payment still submits |
+   | 2 | `20261022_pcu_email_domain.sql` | QA-12 | A non-PCU `signUp` via the API fails; existing logins still work |
+   | 3 | `20261023_profile_self_edit_guards.sql` | QA-11 | Editing your details on the dashboard saves |
+   | 4 | `20261024_payment_reference_unique.sql` | QA-13 | Runs cleanly, or names duplicate references to reject first; re-submitting an existing reference shows the friendly error |
+   | 5 | `20261025_admin_payment_email_rpc.sql` | QA-19 | Approving a payment still sends the email |
+
 2. **Run an authenticated smoke test** (the existing `.kiro/steering/audit-playbook.md` covers most of it):
    - member registers, then confirms email;
+   - edits their details;
    - submits a payment;
    - admin views the receipt, approves it, and the email arrives;
    - reject with a note, which shows on the dashboard;
+   - opening `/admin/payments` while signed out returns you there after login;
    - CSV export;
    - officer/highlight/featured/GCash edits with image uploads;
    - password reset end-to-end.
 
    None of these could be exercised here without writing to live data.
-3. **Decide on QA-11 and QA-12** (profile self-edit; database-level PCU email rule). Both are small SQL changes once decided.
-4. **Production config:** set `NEXT_PUBLIC_SITE_URL` and a verified-domain `RESEND_FROM_EMAIL`. The Resend sandbox sender only delivers to the account owner, so members won't get approval emails without it.
-5. **Ideally, a separate staging Supabase project** so future QA, and these Playwright tests extended with signed-in flows, can run without touching real member data.
-6. **Nice to have:** QA-15 (highlight thumbnails), QA-13 (duplicate reference check), QA-17 (return-to after login), QA-16 (small labels), and a manual pass on iPhone Safari.
+3. **Production config:** set `NEXT_PUBLIC_SITE_URL` (QA-14) and a verified-domain `RESEND_FROM_EMAIL`. The Resend sandbox sender only delivers to the account owner, so members won't get approval emails without it.
+4. **Ideally, a separate staging Supabase project** so future QA, and these Playwright tests extended with signed-in flows, can run without touching real member data.
+5. **Still open:**
+   - QA-16, Lighthouse's 12 px legibility threshold: a typography call.
+   - The 9 dev-tooling `braces` advisories (QA-18): wait for an upstream patch.
+   - A manual pass on iPhone Safari.
 
 ---
 
@@ -314,9 +364,53 @@ How to read this:
 
 **CONDITIONAL:** the site can launch once QA-01 is resolved.
 
-- **Blocking:** QA-01. Until the migration is applied, any member can mark their own membership fee as paid without an officer seeing a receipt. That defeats the portal's core workflow, so it needs fixing before members are invited. The fix is ready, small, and doesn't change existing data.
-- **Fixed and verified here:** the vulnerable Next.js version, the missing security headers, the 404/error experience, the mobile image weight, and the accessibility defects. Evidence: 93/93 automated tests, a clean build and lint, axe and Lighthouse a11y at 100, and no horizontal overflow at any width from 320 to 1920 px.
+- **Blocking:** QA-01. Until the migration is applied, any member can mark their own membership fee as paid without an officer seeing a receipt. That defeats the portal's core workflow, so it needs fixing before members are invited. The fix is ready, small, and doesn't change existing data. The other four migrations (§6.1) should go in at the same time, but they aren't launch-blocking.
+- **Fixed and verified here:**
+  - the vulnerable Next.js version;
+  - the missing security headers;
+  - the 404/error experience;
+  - mobile image weight (logos and highlight photos);
+  - the accessibility defects;
+  - return-to-page after login;
+  - officer-title clipping.
+
+  Evidence: 107/107 automated tests, a clean build and lint, axe and Lighthouse a11y at 100, no horizontal overflow or clipped titles from 320 to 1920 px, and 0 vulnerabilities in production dependencies.
 - **Not yet verified:** the signed-in workflows (§6.2) were reviewed in code and rendered with fake data, but not run end-to-end against a real account. Run that smoke test before announcing the portal.
+
+---
+
+## 8. Follow-up round (2026-10-17)
+
+**Requested:**
+- allow members to edit their own profile;
+- enforce @pcu.edu.ph in the database;
+- apply the recommendations for the open issues;
+- commit and push to `main`.
+
+**Outcomes** are recorded in each bug entry above (QA-11 to QA-20). The files changed in this round:
+
+| File | Change | Bug |
+|---|---|---|
+| `components/portal/EditProfileDialog.tsx` (new), `app/actions/profile.ts` (new), `app/dashboard/page.tsx`, `lib/validations/auth.ts` | Member profile editing; shared field rules with registration | QA-11 |
+| `supabase/migrations/20261022_pcu_email_domain.sql` (new) | PCU-only accounts at the database | QA-12 |
+| `supabase/migrations/20261023_profile_self_edit_guards.sql` (new) | `created_at` lock; name/ID length checks | QA-11 |
+| `supabase/migrations/20261024_payment_reference_unique.sql` (new), `app/actions/payments.ts` | One live payment per reference; friendly error | QA-13 |
+| `app/actions/auth.ts` | Reset-link origin from config or Vercel production URL; login returns to `next` | QA-14, QA-17 |
+| `lib/safe-next.ts` (new), `lib/supabase/middleware.ts`, `app/(auth)/login/*`, `app/auth/callback/route.ts` | Remember and validate the post-login destination | QA-17 |
+| `components/site/HighlightCard.tsx`, `next.config.ts` | Highlight cards via `next/image`; `remotePatterns` locked to one bucket; `turbopack.root` | QA-15, QA-19 |
+| 11 files (`text-[0.7rem]`), `components/officers/OfficerProfileCard.tsx` | Larger labels; phone-width title tracking and wrapping | QA-16, QA-20 |
+| `package.json` | `shadcn` moved to devDependencies | QA-18 |
+| `components/auth/PasswordInput.tsx`, `app/actions/admin-payments.ts`, `supabase/migrations/20261025_admin_payment_email_rpc.sql` (new) | Toggle label; single-row email lookup with fallback | QA-19 |
+| `e2e/*` | +14 tests: redirect memory, safe paths, profile rules, highlight images, title clipping | — |
+
+**Deployment note:** `main` is linked to Vercel, so the push deploys. Every code change works against the database as it stands today, before any migration is applied:
+- the email RPC has a fallback;
+- the unique-reference message only appears once the index exists;
+- profile editing uses the existing policy.
+
+**Verification limits:**
+- **Migrations:** the five unapplied migrations were checked with PostgreSQL's parser. Their PL/pgSQL bodies were reviewed by hand, not executed.
+- **Real account flows:** profile saving, the sign-in redirect and the email RPC were not exercised against a real account.
 
 ---
 

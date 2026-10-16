@@ -81,12 +81,13 @@ test.describe("officer profile dialog", () => {
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole("heading")).toBeVisible();
 
-    // Tabbing cycles inside the dialog.
+    // Tabbing cycles inside the dialog. Base UI routes focus through a guard
+    // element for one tick at the edges, so wait for it to settle back in.
     for (let i = 0; i < 5; i++) {
       await page.keyboard.press("Tab");
-      expect(
-        await dialog.evaluate((d) => d.contains(document.activeElement)),
-      ).toBe(true);
+      await expect
+        .poll(() => dialog.evaluate((d) => d.contains(document.activeElement)))
+        .toBe(true);
     }
 
     await page.keyboard.press("Escape");

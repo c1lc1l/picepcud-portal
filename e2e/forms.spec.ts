@@ -39,9 +39,12 @@ test.describe("login form", () => {
     const password = page.getByLabel("Password", { exact: true });
     await password.fill("secret-pass");
     await expect(password).toHaveAttribute("type", "password");
-    await page.getByRole("button", { name: /show password/i }).click();
+    const toggle = page.getByRole("button", { name: "Show password" });
+    await expect(toggle).toHaveAttribute("aria-pressed", "false");
+    await toggle.click();
     await expect(password).toHaveAttribute("type", "text");
-    await page.getByRole("button", { name: /hide password/i }).click();
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+    await toggle.click();
     await expect(password).toHaveAttribute("type", "password");
   });
 

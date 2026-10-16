@@ -5,7 +5,89 @@ import { addDays, monthGrid, parseDateKey, shiftKeyByMonths } from "@/lib/calend
 import { splitHashtags } from "@/lib/highlights/types";
 import { parseYear, sanitizeSearch } from "@/lib/members";
 import { isRosterLive, officerInitials } from "@/lib/officers/validation";
-import { loginSchema, registerSchema } from "@/lib/validations/auth";
+import { safeNextPath } from "@/lib/safe-next";
+import {
+  loginSchema,
+  profileSchema,
+  registerSchema,
+} from "@/lib/validations/auth";
+
+test.describe("post-login redirect target", () => {
+  test("keeps same-site paths and their query", () => {
+    expect(safeNextPath("/admin/payments")).toBe("/admin/payments");
+    expect(safeNextPath("/admin/payments?status=all&page=2")).toBe(
+      "/admin/payments?status=all&page=2",
+    );
+    expect(safeNextPath("/reset-password")).toBe("/reset-password");
+  });
+
+  test("rejects anything that could leave the site", () => {
+    for (const bad of [
+      "//evil.example",
+      "/\\evil.example",
+      "https://evil.example/x",
+      "javascript:alert(1)",
+      "evil.example",
+      "",
+      null,
+      undefined,
+    ]) {
+      expect(safeNextPath(bad), String(bad)).toBe("/dashboard");
+    }
+  });
+
+  test("doesn't loop back to the auth pages", () => {
+    expect(safeNextPath("/login")).toBe("/dashboard");
+    expect(safeNextPath("/register/")).toBe("/dashboard");
+    expect(safeNextPath("/x", "/home")).toBe("/x");
+    expect(safeNextPath("//x", "/home")).toBe("/home");
+  });
+});
+
+test.describe("profile editing", () => {
+  test("accepts valid details and trims them", () => {
+    const parsed = profileSchema.parse({
+      fullName: "  Juan Dela Cruz ",
+      studentId: " 2021-00123 ",
+      yearLevel: "3",
+    });
+    expect(parsed).toEqual({
+      fullName: "Juan Dela Cruz",
+      studentId: "2021-00123",
+      yearLevel: 3,
+    });
+  });
+
+  test("rejects blank, oversized and out-of-range values", () => {
+    const ok = { fullName: "Juan", studentId: "1", yearLevel: "1" };
+    for (const bad of [
+      { ...ok, fullName: " " },
+      { ...ok, fullName: "x".repeat(121) },
+      { ...ok, studentId: "" },
+      { ...ok, studentId: "x".repeat(41) },
+      { ...ok, yearLevel: "6" },
+    ]) {
+      expect(profileSchema.safeParse(bad).success, JSON.stringify(bad)).toBe(
+        false,
+      );
+    }
+  });
+
+  test("ignores fields a member must not change", () => {
+    const parsed = profileSchema.parse({
+      fullName: "Juan",
+      studentId: "1",
+      yearLevel: "1",
+      role: "admin",
+      email: "x@evil.example",
+    });
+    expect(Object.keys(parsed).sort()).toEqual([
+      "fullName",
+      "studentId",
+      "yearLevel",
+    ]);
+  });
+});
 
 test.describe("members search", () => {
   test("strips PostgREST filter syntax from search input", () => {

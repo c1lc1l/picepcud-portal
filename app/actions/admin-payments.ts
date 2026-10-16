@@ -45,6 +45,28 @@ async function reviewPayment(
   return { payment: data, supabase };
 }
 
+/**
+ * Email of the member behind a payment. Email lives in auth.users, which only
+ * admin RPCs can read. `admin_payment_email` returns just this one address;
+ * until that migration is applied, fall back to the full approved list.
+ */
+async function memberEmail(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  paymentId: string
+) {
+  const single = await supabase.rpc("admin_payment_email", {
+    p_payment_id: paymentId,
+  });
+  if (!single.error) return (single.data as string | null) ?? undefined;
+
+  const { data: rows } = await supabase.rpc("admin_list_payments", {
+    p_status: "approved",
+  });
+  return (rows as { id: string; email: string }[] | null)?.find(
+    (r) => r.id === paymentId
+  )?.email;
+}
+
 export async function approvePayment(
   paymentId: string
 ): Promise<ReviewPaymentResult> {
@@ -59,18 +81,14 @@ export async function approvePayment(
 
   // The approval is already committed; an email failure is reported, not fatal.
   try {
-    const [{ data: profile }, { data: rows }] = await Promise.all([
+    const [{ data: profile }, email] = await Promise.all([
       supabase
         .from("profiles")
         .select("full_name, student_id")
         .eq("id", payment.user_id)
         .single(),
-      // Email lives in auth.users; only the admin RPC can read it.
-      supabase.rpc("admin_list_payments", { p_status: "approved" }),
+      memberEmail(supabase, payment.id),
     ]);
-    const email = (rows as { id: string; email: string }[] | null)?.find(
-      (r) => r.id === payment.id
-    )?.email;
     if (!profile || !email) throw new Error("Member email not found");
 
     await sendPaymentApprovalEmail({

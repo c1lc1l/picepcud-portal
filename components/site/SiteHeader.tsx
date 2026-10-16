@@ -49,7 +49,7 @@ export async function SiteHeader({
             <span className="font-display text-2xl font-extrabold uppercase tracking-wide">
               PICE PCUD
             </span>
-            <span className="mt-1 hidden font-wide text-[0.55rem] uppercase tracking-[0.14em] text-brand-ink/80 sm:block">
+            <span className="mt-1 hidden font-wide text-[0.7rem] uppercase tracking-[0.14em] text-brand-ink/80 sm:block">
               PCU–D Student Chapter
             </span>
           </span>

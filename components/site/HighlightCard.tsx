@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { ArrowUpRightIcon, ImagePlusIcon, XIcon } from "lucide-react";
 import { LinkHostIcon } from "@/components/icons/SocialIcons";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -86,12 +87,14 @@ export function HighlightCardFace({
     <span className="flex h-full flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-foreground/10 transition-shadow duration-500 ease-smooth group-hover:ring-brand-periwinkle/60">
       <span className="relative block aspect-square overflow-hidden bg-muted">
         {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          // Optimized to card size (uploads are up to 1600 px); the admin
+          // form's local blob: preview is passed through unoptimized.
+          <Image
             src={imageUrl}
             alt=""
-            loading="lazy"
-            className="size-full object-cover transition-transform duration-700 ease-smooth motion-safe:group-hover:scale-[1.06]"
+            fill
+            sizes="(min-width: 640px) 256px, 224px"
+            className="object-cover transition-transform duration-700 ease-smooth motion-safe:group-hover:scale-[1.06]"
           />
         ) : (
           <span className="flex size-full items-center justify-center text-muted-foreground">

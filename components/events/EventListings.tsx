@@ -57,7 +57,7 @@ export function PastEventList({ events }: { events: PublicEvent[] }) {
             key={ev.id}
             className="grid grid-cols-[5.5rem_1fr] items-center gap-4 py-5 sm:grid-cols-[7rem_10rem_1fr] sm:gap-6"
           >
-            <p className="font-wide text-[0.65rem] leading-relaxed uppercase tracking-[0.12em] text-muted-foreground">
+            <p className="font-wide text-[0.7rem] leading-relaxed uppercase tracking-[0.12em] text-muted-foreground">
               {d.month} {d.day}
               <br />
               {d.year}

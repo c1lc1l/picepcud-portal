@@ -54,7 +54,16 @@ export async function submitPayment(input: {
     proof_url: proofUrl,
     status: "pending",
   });
-  if (error) return { error: error.message };
+  if (error) {
+    // payments_reference_no_active_key: one live submission per reference.
+    if (error.code === "23505") {
+      return {
+        error:
+          "This GCash reference number has already been submitted. Check your payment history, or contact an officer if you think this is a mistake.",
+      };
+    }
+    return { error: error.message };
+  }
 
   revalidatePath("/dashboard");
   return { success: true };

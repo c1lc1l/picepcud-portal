@@ -234,7 +234,7 @@ export function EventsCalendar({
                   className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0"
                 >
                   <div className="w-14 shrink-0 text-center text-brand-indigo">
-                    <p className="font-wide text-[0.55rem] uppercase tracking-widest">
+                    <p className="font-wide text-[0.7rem] uppercase tracking-widest">
                       {d.month}
                     </p>
                     <p className="font-display text-2xl leading-none font-extrabold">
