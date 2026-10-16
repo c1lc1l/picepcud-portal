@@ -64,8 +64,14 @@ export async function SiteFooter() {
           </ul>
         </div>
       </div>
-      <div className="mx-auto w-full max-w-7xl px-4 pb-8 text-xs text-brand-silver/70 sm:px-6">
-        © {new Date().getFullYear()} PICE PCUD Student Chapter
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-1 px-4 pb-8 text-xs text-brand-silver/70 sm:flex-row sm:justify-between sm:px-6">
+        <p>© {new Date().getFullYear()} PICE-PCUD. All rights reserved.</p>
+        <a
+          href="mailto:pice.cavite@pcu.edu.ph"
+          className="transition-colors hover:text-white"
+        >
+          pice.cavite@pcu.edu.ph
+        </a>
       </div>
     </footer>
   );
