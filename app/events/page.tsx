@@ -1,103 +1,73 @@
-import Link from "next/link";
-import { CalendarIcon, MapPinIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import type { Metadata } from "next";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
+  PastEventList,
+  UpcomingEventList,
+} from "@/components/events/EventListings";
+import { PageMasthead } from "@/components/site/PageMasthead";
+import { SiteFooter } from "@/components/site/SiteFooter";
+import { getPastEvents, getUpcomingEvents } from "@/lib/events";
 
-export const metadata = { title: "Events | PICE PCUD" };
-
-const dateFormat = new Intl.DateTimeFormat("en-PH", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "Asia/Manila",
-});
+export const metadata: Metadata = {
+  title: "Events | PICE PCUD",
+  description:
+    "Upcoming and past events of the PICE PCU–Dasmariñas Student Chapter.",
+};
 
 export default async function EventsPage() {
-  const supabase = await createClient();
-  const { data: events, error } = await supabase
-    .from("events")
-    .select("id, title, description, event_date, location, banner_url, luma_url")
-    .eq("is_active", true)
-    .order("event_date", { ascending: true });
+  const [upcoming, past] = await Promise.all([
+    getUpcomingEvents(),
+    getPastEvents(),
+  ]);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Chapter Events</h1>
-        <p className="text-muted-foreground">
-          Upcoming PICE PCUD events. Register through Luma.
+    <>
+      <PageMasthead title="Events" current="events">
+        <p>
+          Chapter activities for PCU–Dasmariñas civil engineering students.
+          Registration for each event is handled on Luma.
         </p>
-      </div>
+      </PageMasthead>
 
-      {error ? (
-        <p className="text-sm text-destructive">
-          Failed to load events. Please try again later.
-        </p>
-      ) : !events?.length ? (
-        <p className="py-12 text-center text-muted-foreground">
-          No events are open right now. Check back soon!
-        </p>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {events.map((ev) => (
-            <Card key={ev.id} className="overflow-hidden pt-0">
-              {ev.banner_url ? (
-                // eslint-disable-next-line @next/next/no-img-element -- user-uploaded banner from Supabase storage
-                <img
-                  src={ev.banner_url}
-                  alt={`${ev.title} banner`}
-                  className="aspect-video w-full object-cover"
-                />
-              ) : (
-                <div className="flex aspect-video w-full items-center justify-center bg-muted text-muted-foreground">
-                  <CalendarIcon className="size-10" />
-                </div>
-              )}
-              <CardHeader>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">
-                    <CalendarIcon />
-                    {dateFormat.format(new Date(ev.event_date))}
-                  </Badge>
-                  <Badge variant="outline">
-                    <MapPinIcon />
-                    {ev.location}
-                  </Badge>
-                </div>
-                <CardTitle className="text-lg">{ev.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <CardDescription className="line-clamp-4 whitespace-pre-line">
-                  {ev.description}
-                </CardDescription>
-              </CardContent>
-              <CardFooter>
-                <Button
-                  className="w-full"
-                  nativeButton={false}
-                  render={
-                    <Link
-                      href={ev.luma_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    />
-                  }
-                >
-                  Register on Luma ↗
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+      <main className="flex-1">
+        <section
+          aria-labelledby="upcoming-heading"
+          className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 md:py-20"
+        >
+          <h2
+            id="upcoming-heading"
+            className="font-headline text-5xl leading-none uppercase text-brand-ink md:text-6xl"
+          >
+            Upcoming
+          </h2>
+          <hr className="chrome-rule mt-5 mb-10" />
+
+          <UpcomingEventList
+            events={upcoming.data}
+            failed={Boolean(upcoming.error)}
+          />
+        </section>
+
+        {!past.error && past.data.length > 0 && (
+          <section
+            aria-labelledby="past-heading"
+            className="border-t border-border bg-white/50"
+          >
+            <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 md:py-20">
+              <h2
+                id="past-heading"
+                className="font-headline text-5xl leading-none uppercase text-brand-ink md:text-6xl"
+              >
+                Past events
+              </h2>
+              <hr className="chrome-rule mt-5 mb-4" />
+
+              <PastEventList events={past.data} />
+            </div>
+          </section>
+        )}
+      </main>
+
+      <SiteFooter />
+    </>
   );
 }

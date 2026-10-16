@@ -1,11 +1,41 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import {
+  Archivo,
+  Big_Shoulders,
+  Geist_Mono,
+  Michroma,
+  Six_Caps,
+} from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin", "latin-ext"],
+});
+
+// Tall, squared condensed face — closest open match to the cover title.
+const bigShoulders = Big_Shoulders({
+  variable: "--font-big-shoulders",
+  subsets: ["latin", "latin-ext"],
+  weight: ["700", "800", "900"],
+  adjustFontFallback: false,
+  fallback: ["Arial Narrow", "Impact", "sans-serif"],
+});
+
+// Ultra-condensed caps for big titles — closest open match to the cover
+// title lettering.
+const sixCaps = Six_Caps({
+  variable: "--font-six-caps",
+  subsets: ["latin", "latin-ext"],
+  weight: "400",
+});
+
+// Wide geometric face — closest open match to the cover subtitle.
+const michroma = Michroma({
+  variable: "--font-michroma",
+  subsets: ["latin", "latin-ext"],
+  weight: "400",
 });
 
 const geistMono = Geist_Mono({
@@ -14,15 +44,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Picepcud Portal",
-  description: "Picepcud Portal",
+  title: "PICE PCUD | PCU Dasmariñas Student Chapter",
+  description:
+    "PICE – Philippine Christian University – Dasmariñas Student Chapter: a student-led organization developing future civil engineers through technical training, leadership, and professional growth.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${bigShoulders.variable} ${sixCaps.variable} ${michroma.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}

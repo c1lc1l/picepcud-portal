@@ -30,6 +30,7 @@ export type EventRow = {
   location: string;
   luma_url: string;
   is_active: boolean;
+  is_past: boolean;
 };
 
 const dateFormat = new Intl.DateTimeFormat("en-PH", {
@@ -38,7 +39,13 @@ const dateFormat = new Intl.DateTimeFormat("en-PH", {
   timeZone: "Asia/Manila",
 });
 
-export function EventsTable({ events }: { events: EventRow[] }) {
+export function EventsTable({
+  events,
+  emptyMessage = "No events yet. Click “Add Event” to create one.",
+}: {
+  events: EventRow[];
+  emptyMessage?: string;
+}) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const [toDelete, setToDelete] = useState<EventRow | null>(null);
@@ -73,7 +80,7 @@ export function EventsTable({ events }: { events: EventRow[] }) {
 
   return (
     <>
-      <Table>
+      <Table className="min-w-160">
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
@@ -90,7 +97,7 @@ export function EventsTable({ events }: { events: EventRow[] }) {
                 colSpan={5}
                 className="h-24 text-center text-muted-foreground"
               >
-                No events yet. Click “Add Event” to create one.
+                {emptyMessage}
               </TableCell>
             </TableRow>
           ) : (
@@ -98,8 +105,17 @@ export function EventsTable({ events }: { events: EventRow[] }) {
               const isActive = active[ev.id] ?? ev.is_active;
               return (
                 <TableRow key={ev.id}>
-                  <TableCell className="font-medium">{ev.title}</TableCell>
-                  <TableCell>{dateFormat.format(new Date(ev.event_date))}</TableCell>
+                  <TableCell className="font-medium text-brand-ink">
+                    {ev.title}
+                  </TableCell>
+                  <TableCell>
+                    {dateFormat.format(new Date(ev.event_date))}
+                    {ev.is_past && (
+                      <span className="block text-xs text-muted-foreground">
+                        Past
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell>{ev.location}</TableCell>
                   <TableCell>
                     <Badge
@@ -120,7 +136,11 @@ export function EventsTable({ events }: { events: EventRow[] }) {
                         size="sm"
                         nativeButton={false}
                         render={
-                          <a href={ev.luma_url} target="_blank" rel="noreferrer" />
+                          <a
+                            href={ev.luma_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          />
                         }
                       >
                         <ExternalLinkIcon />

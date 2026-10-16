@@ -49,7 +49,10 @@ const STATUS_STYLES: Record<PaymentStatus, string> = {
 
 export function StatusBadge({ status }: { status: PaymentStatus }) {
   return (
-    <Badge variant="outline" className={`border-0 capitalize ${STATUS_STYLES[status]}`}>
+    <Badge
+      variant="outline"
+      className={`border-0 capitalize ${STATUS_STYLES[status]}`}
+    >
       {status}
     </Badge>
   );
@@ -111,7 +114,7 @@ export function PaymentsTable({ payments }: { payments: PaymentRow[] }) {
       if (result.warning) toast.warning(result.warning);
       else
         toast.success(
-          action === "approve" ? "Payment approved" : "Payment rejected"
+          action === "approve" ? "Payment approved" : "Payment rejected",
         );
     });
   }
@@ -125,24 +128,24 @@ export function PaymentsTable({ payments }: { payments: PaymentRow[] }) {
 
   return (
     <>
-      <Table>
+      <Table className="min-w-180">
         <TableHeader>
           <TableRow>
             <TableHead>Member</TableHead>
-            <TableHead>Student ID</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Reference No.</TableHead>
+            <TableHead>Reference no.</TableHead>
             <TableHead className="text-right">Amount</TableHead>
             <TableHead>Submitted</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Receipt</TableHead>
+            <TableHead className="text-right">
+              <span className="sr-only">Actions</span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {payments.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={8}
+                colSpan={6}
                 className="h-24 text-center text-muted-foreground"
               >
                 No payments found.
@@ -152,57 +155,64 @@ export function PaymentsTable({ payments }: { payments: PaymentRow[] }) {
             payments.map((row) => {
               const p = { ...row, status: statuses[row.id] ?? row.status };
               return (
-              <TableRow key={p.id}>
-                <TableCell className="font-medium">{p.full_name}</TableCell>
-                <TableCell>{p.student_id}</TableCell>
-                <TableCell>{p.email}</TableCell>
-                <TableCell className="font-mono text-xs">
-                  {p.reference_no}
-                </TableCell>
-                <TableCell className="text-right">
-                  {peso.format(p.amount)}
-                </TableCell>
-                <TableCell>{dateFormat.format(new Date(p.created_at))}</TableCell>
-                <TableCell>
-                  <StatusBadge status={p.status} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openReceipt(p)}
-                    >
-                      <EyeIcon />
-                      View Receipt
-                    </Button>
-                    {p.status === "pending" && (
-                      <>
-                        <Button
-                          size="sm"
-                          disabled={reviewing}
-                          onClick={() => setReview({ payment: p, action: "approve" })}
-                        >
-                          <CheckIcon />
-                          Approve
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          disabled={reviewing}
-                          onClick={() => {
-                            setReason("");
-                            setReview({ payment: p, action: "reject" });
-                          }}
-                        >
-                          <XIcon />
-                          Reject
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
+                <TableRow key={p.id}>
+                  <TableCell>
+                    <p className="font-medium text-brand-ink">{p.full_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {p.student_id} · {p.email}
+                    </p>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {p.reference_no}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {peso.format(p.amount)}
+                  </TableCell>
+                  <TableCell>
+                    {dateFormat.format(new Date(p.created_at))}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={p.status} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openReceipt(p)}
+                      >
+                        <EyeIcon />
+                        Receipt
+                      </Button>
+                      {p.status === "pending" && (
+                        <>
+                          <Button
+                            size="sm"
+                            disabled={reviewing}
+                            onClick={() =>
+                              setReview({ payment: p, action: "approve" })
+                            }
+                          >
+                            <CheckIcon />
+                            Approve
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={reviewing}
+                            onClick={() => {
+                              setReason("");
+                              setReview({ payment: p, action: "reject" });
+                            }}
+                          >
+                            <XIcon />
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
               );
             })
           )}
@@ -242,7 +252,9 @@ export function PaymentsTable({ payments }: { payments: PaymentRow[] }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {review?.action === "approve" ? "Approve payment?" : "Reject payment?"}
+              {review?.action === "approve"
+                ? "Approve payment?"
+                : "Reject payment?"}
             </DialogTitle>
             <DialogDescription>
               {review?.payment.full_name} · Ref {review?.payment.reference_no} ·{" "}

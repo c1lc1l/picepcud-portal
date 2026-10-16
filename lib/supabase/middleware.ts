@@ -43,5 +43,28 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Signed-in users get the portal versions of public pages. GET only, so
+  // server action POSTs are never redirected mid-flight.
+  const portalPath =
+    user && request.method === "GET" ? PORTAL_ROUTES[pathname] : undefined;
+  if (portalPath) {
+    const url = request.nextUrl.clone();
+    url.pathname = portalPath;
+    url.search = "";
+    const redirect = NextResponse.redirect(url);
+    // Keep any refreshed session cookies set above.
+    response.cookies
+      .getAll()
+      .forEach((cookie) => redirect.cookies.set(cookie));
+    return redirect;
+  }
+
   return response;
 }
+
+const PORTAL_ROUTES: Record<string, string> = {
+  "/": "/dashboard",
+  "/events": "/dashboard/events",
+  "/login": "/dashboard",
+  "/register": "/dashboard",
+};
