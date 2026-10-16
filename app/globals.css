@@ -7,9 +7,29 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-archivo);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-archivo);
+  /* Public-site identity faces, matched to the chapter cover art.
+     Keep these off portal/admin surfaces. */
+  --font-display: var(--font-big-shoulders);
+  /* Six Caps for big uppercase titles: the closest open match to the
+     cover's ultra-condensed title lettering. Single weight — don't bold. */
+  --font-headline: var(--font-six-caps);
+  --font-wide: var(--font-michroma);
+  /* Shared motion curve: quick start, long soft settle. */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Every transition-* utility uses the smooth curve by default. */
+  --default-transition-duration: 250ms;
+  --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-indigo: var(--brand-indigo);
+  --color-brand-violet: var(--brand-violet);
+  --color-brand-periwinkle: var(--brand-periwinkle);
+  --color-brand-lilac: var(--brand-lilac);
+  --color-brand-silver: var(--brand-silver);
+  --color-brand-pearl: var(--brand-pearl);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,27 +69,36 @@
 }
 
 :root {
-  /* Slate-based theme tokens. Update these hex values to re-theme the
-     whole app — every component reads through the --color-* aliases
-     in @theme above, so nothing else needs to change. */
-  --background: #ffffff;
-  --foreground: #0f172a;
+  /* Brand palette, sampled from the official PICE PCUD logo and the
+     chapter's 2026 cover art. Semantic tokens below derive from these;
+     update here to re-theme the whole app. */
+  --brand-ink: #231741; /* cover title lettering */
+  --brand-deep: #0c0130; /* logo shadow fill */
+  --brand-indigo: #140661; /* logo knot fill */
+  --brand-violet: #493f80;
+  --brand-periwinkle: #7c81b9;
+  --brand-lilac: #846faa;
+  --brand-silver: #d8d6e6; /* chrome bevel highlight */
+  --brand-pearl: #f7f6fa;
+
+  --background: var(--brand-pearl);
+  --foreground: var(--brand-ink);
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: var(--brand-ink);
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #0f172a;
-  --primary-foreground: #f8fafc;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #e2e8f0;
-  --accent-foreground: #0f172a;
-  --destructive: #dc2626;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #94a3b8;
+  --popover-foreground: var(--brand-ink);
+  --primary: var(--brand-indigo);
+  --primary-foreground: #fbfbfd;
+  --secondary: #ebe9f3;
+  --secondary-foreground: var(--brand-ink);
+  --muted: #efedf5;
+  --muted-foreground: #5c5779;
+  --accent: #e4e2ef;
+  --accent-foreground: var(--brand-ink);
+  --destructive: #c2263a;
+  --border: #dcd9e8;
+  --input: #d3d0e2;
+  --ring: var(--brand-periwinkle);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -87,24 +116,24 @@
 }
 
 .dark {
-  --background: #0f172a;
-  --foreground: #f8fafc;
-  --card: #1e293b;
-  --card-foreground: #f8fafc;
-  --popover: #1e293b;
-  --popover-foreground: #f8fafc;
-  --primary: #e2e8f0;
-  --primary-foreground: #1e293b;
-  --secondary: #334155;
-  --secondary-foreground: #f8fafc;
-  --muted: #334155;
-  --muted-foreground: #94a3b8;
-  --accent: #475569;
-  --accent-foreground: #f8fafc;
+  --background: var(--brand-deep);
+  --foreground: #f1f0f7;
+  --card: #150a45;
+  --card-foreground: #f1f0f7;
+  --popover: #150a45;
+  --popover-foreground: #f1f0f7;
+  --primary: var(--brand-silver);
+  --primary-foreground: var(--brand-indigo);
+  --secondary: #241a5c;
+  --secondary-foreground: #f1f0f7;
+  --muted: #241a5c;
+  --muted-foreground: #b9b5d6;
+  --accent: #2f2570;
+  --accent-foreground: #f1f0f7;
   --destructive: #f87171;
-  --border: #334155;
-  --input: #334155;
-  --ring: #64748b;
+  --border: #2f2570;
+  --input: #2f2570;
+  --ring: var(--brand-periwinkle);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -129,5 +158,101 @@
   }
   html {
     @apply font-sans;
+  }
+
+  /* Respect the OS "reduce motion" setting across all animations. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Identity treatments from the cover art. Use only on public identity
+   moments (hero, dividers, footer) — never on buttons, forms or tables. */
+@layer components {
+  /* Pearl centre fading to indigo, with the cover's rising light streaks. */
+  .cover-sweep {
+    background:
+      linear-gradient(
+        180deg,
+        rgb(75 78 147 / 0.5) 0%,
+        transparent 26%,
+        transparent 72%,
+        rgb(81 93 167 / 0.6) 100%
+      ),
+      linear-gradient(
+        112deg,
+        transparent 0 40%,
+        rgb(255 255 255 / 0.55) 47%,
+        transparent 55%
+      ),
+      linear-gradient(
+        104deg,
+        transparent 0 16%,
+        rgb(255 255 255 / 0.35) 23%,
+        transparent 30%
+      ),
+      linear-gradient(
+        100deg,
+        transparent 0 58%,
+        rgb(255 255 255 / 0.3) 63%,
+        transparent 69%
+      ),
+      radial-gradient(
+        55% 75% at 6% 0%,
+        rgb(132 111 170 / 0.75),
+        transparent 70%
+      ),
+      linear-gradient(
+        90deg,
+        #8c88bf 0%,
+        #cfcde3 22%,
+        #efeef3 48%,
+        #d6d3e6 64%,
+        #5a4a95 86%,
+        #2e1f72 100%
+      );
+  }
+
+  /* Bevelled silver hairline — the logo's chrome edge as a divider. */
+  .chrome-rule {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--brand-silver) 12%,
+      #ffffff 32%,
+      var(--brand-periwinkle) 62%,
+      var(--brand-violet) 86%,
+      transparent
+    );
+  }
+
+  .chrome-rule-dark {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(216 214 230 / 0.15) 10%,
+      rgb(255 255 255 / 0.55) 35%,
+      rgb(124 129 185 / 0.4) 70%,
+      transparent
+    );
+  }
+
+  /* Oversized, cropped emblem fading in from the right edge. */
+  .emblem-ghost {
+    mask-image:
+      linear-gradient(90deg, transparent 0%, #000 40%),
+      linear-gradient(180deg, transparent 8%, #000 30%);
+    mask-composite: intersect;
   }
 }

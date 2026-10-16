@@ -1,7 +1,20 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { PaymentsTable, type PaymentRow } from "@/components/admin/PaymentsTable";
-import { Button } from "@/components/ui/button";
+import { redirect } from "next/navigation";
+import {
+  AdminPageHeader,
+  tableFrameClass,
+} from "@/components/admin/AdminPageHeader";
+import { Pagination } from "@/components/admin/Pagination";
+import {
+  PaymentsTable,
+  type PaymentRow,
+  type PaymentStatus,
+} from "@/components/admin/PaymentsTable";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
+
+export const metadata: Metadata = { title: "Payments | Admin | PICE PCUD" };
 
 const FILTERS = [
   { label: "Pending", value: "pending" },
@@ -10,52 +23,116 @@ const FILTERS = [
   { label: "All", value: "all" },
 ] as const;
 
+const STATUSES: PaymentStatus[] = ["pending", "approved", "rejected"];
+
+const PAGE_SIZE = 20;
+
 export default async function AdminPaymentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; page?: string }>;
 }) {
-  const { status } = await searchParams;
-  const active = FILTERS.find((f) => f.value === status)?.value ?? "pending";
+  const params = await searchParams;
+  const active =
+    FILTERS.find((f) => f.value === params.status)?.value ?? "pending";
+  const requestedPage = Math.max(
+    1,
+    Number.parseInt(params.page ?? "1", 10) || 1,
+  );
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("admin_list_payments", {
-    p_status: active === "all" ? null : active,
-  });
+  const [{ data, error }, ...countResults] = await Promise.all([
+    supabase.rpc("admin_list_payments", {
+      p_status: active === "all" ? null : active,
+    }),
+    ...STATUSES.map((s) =>
+      supabase
+        .from("payments")
+        .select("*", { count: "exact", head: true })
+        .eq("status", s),
+    ),
+  ]);
 
-  const payments = (data ?? []).map((p: PaymentRow) => ({
-    ...p,
-    amount: Number(p.amount),
-  }));
+  const counts: Record<string, number | null> = Object.fromEntries(
+    STATUSES.map((s, i) => [s, countResults[i].count]),
+  );
+  counts.all = STATUSES.every((s) => counts[s] != null)
+    ? STATUSES.reduce((sum, s) => sum + (counts[s] ?? 0), 0)
+    : null;
+
+  // The RPC returns every row for the status; page through them here.
+  const rows = (data ?? []) as PaymentRow[];
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
+  const pageHref = (p: number) =>
+    `/admin/payments?status=${active}${p > 1 ? `&page=${p}` : ""}`;
+  if (!error && requestedPage > totalPages) redirect(pageHref(page));
+
+  const payments = rows
+    .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    .map((p) => ({ ...p, amount: Number(p.amount) }));
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Payments</h1>
-        <p className="text-muted-foreground">
-          Review GCash receipts submitted by members.
-        </p>
-      </div>
-      <div className="flex gap-2">
-        {FILTERS.map((f) => (
-          <Button
-            key={f.value}
-            variant={active === f.value ? "default" : "outline"}
-            size="sm"
-            nativeButton={false}
-            render={<Link href={`/admin/payments?status=${f.value}`} />}
-          >
-            {f.label}
-          </Button>
-        ))}
-      </div>
+    <>
+      <AdminPageHeader
+        title="Payments"
+        description="Check each GCash receipt against its reference number and amount before approving."
+      />
+
+      <nav
+        aria-label="Filter by status"
+        className="flex w-fit max-w-full gap-1 overflow-x-auto rounded-lg bg-muted p-1"
+      >
+        {FILTERS.map((f) => {
+          const isActive = active === f.value;
+          return (
+            <Link
+              key={f.value}
+              href={`/admin/payments?status=${f.value}`}
+              aria-current={isActive ? "page" : undefined}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+                isActive
+                  ? "bg-card text-brand-ink shadow-sm ring-1 ring-foreground/10"
+                  : "text-muted-foreground hover:text-brand-ink",
+              )}
+            >
+              {f.label}
+              {counts[f.value] != null && (
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 text-xs tabular-nums",
+                    f.value === "pending" && (counts.pending ?? 0) > 0
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-background text-muted-foreground",
+                  )}
+                >
+                  {counts[f.value]}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+
       {error ? (
-        <p className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-destructive">
           Failed to load payments: {error.message}
         </p>
       ) : (
-        <PaymentsTable payments={payments} />
+        <>
+          <div className={tableFrameClass}>
+            <PaymentsTable payments={payments} />
+          </div>
+          <Pagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={rows.length}
+            hrefFor={pageHref}
+            label="Payments pages"
+          />
+        </>
       )}
-    </div>
+    </>
   );
 }

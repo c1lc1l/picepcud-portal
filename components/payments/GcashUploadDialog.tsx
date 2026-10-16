@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ComponentProps } from "react";
 import imageCompression from "browser-image-compression";
-import { ImagePlus, Loader2, QrCode } from "lucide-react";
+import { CheckIcon, CopyIcon, ImagePlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { submitPayment } from "@/app/actions/payments";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { GcashAccount } from "@/lib/payments/gcash";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -25,12 +26,21 @@ type Stage = "idle" | "compressing" | "uploading";
 
 export function GcashUploadDialog({
   userId,
+  gcash,
   triggerLabel = "Pay via GCash",
+  triggerVariant,
 }: {
   userId: string;
+  /**
+   * Receiving account, passed from the server so it stays out of the bundle.
+   * Null until an admin sets it up in /admin/settings.
+   */
+  gcash: GcashAccount | null;
   triggerLabel?: string;
+  triggerVariant?: ComponentProps<typeof Button>["variant"];
 }) {
   const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [referenceNo, setReferenceNo] = useState("");
   const [amount, setAmount] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -70,12 +80,24 @@ export function GcashUploadDialog({
       setFile(compressed);
       setPreview(URL.createObjectURL(compressed));
       toast.success(
-        `Screenshot compressed to ${Math.round(compressed.size / 1024)} KB`
+        `Screenshot compressed to ${Math.round(compressed.size / 1024)} KB`,
       );
     } catch {
       toast.error("Could not process that image. Try another one.");
     } finally {
       setStage("idle");
+    }
+  }
+
+  async function copyNumber() {
+    try {
+      await navigator.clipboard.writeText(
+        (gcash?.number ?? "").replace(/\s/g, ""),
+      );
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Couldn't copy. Please type the number manually.");
     }
   }
 
@@ -127,7 +149,9 @@ export function GcashUploadDialog({
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>{triggerLabel}</Button>
+      <Button variant={triggerVariant} onClick={() => setOpen(true)}>
+        {triggerLabel}
+      </Button>
       <Dialog
         open={open}
         onOpenChange={(next) => {
@@ -143,16 +167,60 @@ export function GcashUploadDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col items-center gap-2 rounded-lg border bg-muted/40 p-4">
-            {/* TODO: replace with the official PICE PCUD GCash QR image */}
-            <div className="flex size-40 items-center justify-center rounded-md border-2 border-dashed bg-background text-muted-foreground">
-              <QrCode className="size-16" aria-label="GCash QR placeholder" />
+          {gcash ? (
+            <div className="flex flex-col items-center gap-4 rounded-lg border bg-muted/40 p-4 sm:flex-row sm:items-center">
+              {gcash.hasQr && (
+                // eslint-disable-next-line @next/next/no-img-element -- served by an authenticated route handler
+                <img
+                  src={`/payments/gcash-qr?v=${encodeURIComponent(gcash.version)}`}
+                  alt={`GCash QR code for ${gcash.accountName}`}
+                  width={410}
+                  height={410}
+                  className="size-44 shrink-0 rounded-md bg-white object-contain"
+                />
+              )}
+              <div className="flex min-w-0 flex-col items-center gap-1 text-center sm:items-start sm:text-left">
+                <p className="text-xs text-muted-foreground">Send to</p>
+                <p className="font-medium text-brand-ink">
+                  {gcash.accountName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  PICE PCUD {gcash.role}
+                </p>
+                {gcash.number && (
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <span className="font-mono text-sm font-medium text-brand-ink">
+                      {gcash.number}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={copyNumber}
+                      aria-label={
+                        copied ? "Number copied" : "Copy GCash number"
+                      }
+                    >
+                      {copied ? <CheckIcon /> : <CopyIcon />}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
-            <p className="text-sm font-medium">PICE PCUD — GCash</p>
-          </div>
+          ) : (
+            <p
+              role="status"
+              className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900"
+            >
+              The chapter&apos;s GCash details haven&apos;t been set up yet.
+              Please contact a chapter officer before paying.
+            </p>
+          )}
 
           <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
-            <li>Open GCash and scan the QR code above.</li>
+            <li>
+              Open GCash and scan the QR code, or send to the number above.
+            </li>
             <li>Enter the exact amount and send the payment.</li>
             <li>Screenshot the receipt showing the reference number.</li>
             <li>Fill out the form below and upload the screenshot.</li>
@@ -213,7 +281,7 @@ export function GcashUploadDialog({
                 className={cn(
                   "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-sm text-muted-foreground transition-colors",
                   dragging && "border-primary bg-primary/5",
-                  busy && "cursor-not-allowed opacity-60"
+                  busy && "cursor-not-allowed opacity-60",
                 )}
               >
                 {stage === "compressing" ? (

@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { CreateEventDialog } from "@/components/admin/CreateEventDialog";
-import { EventsTable, type EventRow } from "@/components/admin/EventsTable";
+import { EventsBrowser } from "@/components/admin/EventsBrowser";
+import type { EventRow } from "@/components/admin/EventsTable";
+import { manilaDateKey } from "@/lib/calendar";
+import { withPastFlag } from "@/lib/events";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = { title: "Events | Admin | PICE PCUD" };
 
 export default async function AdminEventsPage() {
   const supabase = await createClient();
@@ -10,23 +17,22 @@ export default async function AdminEventsPage() {
     .order("event_date", { ascending: false });
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Events</h1>
-          <p className="text-muted-foreground">
-            Create and manage chapter events linked to Luma.
-          </p>
-        </div>
-        <CreateEventDialog />
-      </div>
+    <>
+      <AdminPageHeader
+        title="Events"
+        description="Active events appear on the public site. Registration happens on Luma."
+        actions={<CreateEventDialog />}
+      />
       {error ? (
-        <p className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-destructive">
           Failed to load events: {error.message}
         </p>
       ) : (
-        <EventsTable events={(data ?? []) as EventRow[]} />
+        <EventsBrowser
+          events={withPastFlag((data ?? []) as Omit<EventRow, "is_past">[])}
+          today={manilaDateKey()}
+        />
       )}
-    </div>
+    </>
   );
 }
