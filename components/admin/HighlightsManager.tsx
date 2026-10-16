@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { HighlightCardFace } from "@/components/site/HighlightCard";
 import { Textarea } from "@/components/ui/textarea";
 import { highlightPhotoUrl, type Highlight } from "@/lib/highlights/types";
 import { createClient } from "@/lib/supabase/client";
@@ -117,7 +118,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
                 return (
                   <li
                     key={h.id}
-                    className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
+                    className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5 first:pt-0 last:pb-0 sm:flex-nowrap"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -152,7 +153,8 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
                         </Badge>
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-0.5">
+                    {/* Own row on phones so the title isn't squeezed. */}
+                    <div className="flex basis-full items-center justify-end gap-0.5 sm:shrink-0 sm:basis-auto">
                       {busyId === h.id ? (
                         <Loader2 className="mx-2 size-4 animate-spin text-muted-foreground" />
                       ) : (
@@ -190,7 +192,9 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        onClick={() => setEditing({ mode: "edit", highlight: h })}
+                        onClick={() =>
+                          setEditing({ mode: "edit", highlight: h })
+                        }
                         aria-label={`Edit "${h.title || h.caption}"`}
                       >
                         <PencilIcon />
@@ -217,7 +221,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
         open={editing !== null}
         onOpenChange={(open) => !open && setEditing(null)}
       >
-        <DialogContent className="flex max-h-[90vh] flex-col gap-0 p-0 sm:max-w-lg">
+        <DialogContent className="flex max-h-[90vh] flex-col gap-0 p-0 sm:max-w-lg md:max-w-3xl">
           {editing && (
             // Remount per highlight so field and photo state reset.
             <HighlightForm
@@ -276,6 +280,10 @@ function HighlightForm({
   const existing = editing.mode === "edit" ? editing.highlight : null;
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  // Controlled so the card preview updates as the admin types.
+  const [title, setTitle] = useState(existing?.title ?? "");
+  const [caption, setCaption] = useState(existing?.caption ?? "");
+  const [linkUrl, setLinkUrl] = useState(existing?.link_url ?? "");
   const [processing, setProcessing] = useState(false);
   const [saving, startSaving] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -355,91 +363,113 @@ function HighlightForm({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-        <div className="space-y-2">
-          <Label>Image</Label>
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => !busy && inputRef.current?.click()}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                if (!busy) inputRef.current?.click();
-              }
-            }}
-            className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-sm text-muted-foreground"
-          >
-            {processing ? (
-              <>
-                <Loader2 className="size-6 animate-spin" />
-                Compressing image…
-              </>
-            ) : shownImage ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={shownImage}
-                  alt="Post preview"
-                  className="max-h-32 rounded-md object-contain"
-                />
-                <span>Click to replace</span>
-              </>
-            ) : (
-              <>
-                <ImagePlus className="size-6" />
-                Click to select an image
-              </>
-            )}
+      <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-4 md:grid-cols-[minmax(0,1fr)_16rem]">
+        <div className="flex flex-col gap-4">
+          <div className="space-y-2">
+            <Label>Image</Label>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => !busy && inputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  if (!busy) inputRef.current?.click();
+                }
+              }}
+              className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-sm text-muted-foreground"
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="size-6 animate-spin" />
+                  Compressing image…
+                </>
+              ) : shownImage ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={shownImage}
+                    alt="Post preview"
+                    className="max-h-32 rounded-md object-contain"
+                  />
+                  <span>Click to replace</span>
+                </>
+              ) : (
+                <>
+                  <ImagePlus className="size-6" />
+                  Click to select an image
+                </>
+              )}
+            </div>
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden
+              onChange={(e) => {
+                void pickImage(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
           </div>
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            tabIndex={-1}
-            aria-hidden
-            onChange={(e) => {
-              void pickImage(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
+
+          <div className="space-y-2">
+            <Label htmlFor="title">Title (optional)</Label>
+            <Input
+              id="title"
+              name="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={120}
+              placeholder="e.g. PICESIKLABAN 2026"
+              className="h-9"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="caption">Caption</Label>
+            <Textarea
+              id="caption"
+              name="caption"
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              maxLength={300}
+              rows={2}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="linkUrl">Link (optional)</Label>
+            <Input
+              id="linkUrl"
+              name="linkUrl"
+              type="url"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="https://facebook.com/..."
+              className="h-9"
+            />
+            <p className="text-xs text-muted-foreground">
+              e.g. the Facebook or Instagram post this came from.
+            </p>
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="title">Title (optional)</Label>
-          <Input
-            id="title"
-            name="title"
-            defaultValue={existing?.title ?? ""}
-            maxLength={120}
-            placeholder="e.g. PICESIKLABAN 2026"
-            className="h-9"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="caption">Caption</Label>
-          <Textarea
-            id="caption"
-            name="caption"
-            defaultValue={existing?.caption ?? ""}
-            maxLength={300}
-            rows={2}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="linkUrl">Link (optional)</Label>
-          <Input
-            id="linkUrl"
-            name="linkUrl"
-            type="url"
-            defaultValue={existing?.link_url ?? ""}
-            placeholder="https://facebook.com/..."
-            className="h-9"
-          />
+        {/* Hidden from screen readers: it repeats the fields above. */}
+        <div aria-hidden className="space-y-2 md:sticky md:top-0 md:self-start">
+          <p className="text-sm font-medium">Preview</p>
+          <div className="w-56 sm:w-64">
+            <HighlightCardFace
+              title={title.trim() || null}
+              caption={caption.trim() || "Your caption will appear here."}
+              imageUrl={shownImage}
+              linkUrl={linkUrl.trim() || null}
+            />
+          </div>
           <p className="text-xs text-muted-foreground">
-            e.g. the Facebook or Instagram post this came from.
+            As it will appear on the homepage. Hashtags at the end of the
+            caption show as tags.
           </p>
         </div>
       </div>
