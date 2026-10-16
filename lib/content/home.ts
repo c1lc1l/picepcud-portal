@@ -18,8 +18,8 @@ export const homeContent = {
         body: "Create an account with your student ID and year level.",
       },
       {
-        title: "Pay your dues",
-        body: "Send your dues through GCash and upload the receipt from your dashboard.",
+        title: "Settle your membership fee",
+        body: "Send your membership fee through GCash and upload the receipt from your dashboard.",
       },
       {
         title: "Get verified",

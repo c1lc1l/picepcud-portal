@@ -41,7 +41,7 @@ export function LoginForm({ registered }: { registered: boolean }) {
         Log in
       </h1>
       <p className="mt-3 text-muted-foreground">
-        Pay your dues, track your payments, and see chapter events.
+        Settle your membership fee, track your payments, and see chapter events.
       </p>
       <hr className="chrome-rule mt-6 mb-8" />
 

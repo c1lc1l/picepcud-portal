@@ -68,7 +68,7 @@ export function RegisterForm() {
         Join the chapter
       </h1>
       <p className="mt-3 text-muted-foreground">
-        Create your account, then pay your dues from your dashboard. An officer
+        Create your account, then settle your membership fee from your dashboard. An officer
         reviews each payment and emails you once it&apos;s approved.
       </p>
       <hr className="chrome-rule mt-6 mb-8" />
