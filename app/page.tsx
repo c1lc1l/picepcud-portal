@@ -143,7 +143,7 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Highlights — past events and social posts, admin-curated. */}
+        {/* Moments — past events and social posts, admin-curated. */}
         {highlights && highlights.length > 0 && (
           <section
             aria-labelledby="highlights-heading"
@@ -154,7 +154,7 @@ export default async function Home() {
                 id="highlights-heading"
                 className="font-headline text-6xl leading-none uppercase text-brand-ink md:text-7xl"
               >
-                Highlights
+                Moments
               </h2>
               <hr className="chrome-rule mt-5 mb-10" />
               <HighlightsCarousel highlights={highlights} />

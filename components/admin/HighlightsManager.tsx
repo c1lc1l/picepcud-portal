@@ -72,7 +72,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
         return;
       }
       setActive((s) => ({ ...s, [highlight.id]: next }));
-      toast.success(next ? "Highlight shown" : "Highlight hidden");
+      toast.success(next ? "Moment shown" : "Moment hidden");
     });
   }
 
@@ -83,7 +83,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
       const result = await deleteHighlight(highlight.id);
       setToDelete(null);
       if ("error" in result) toast.error(result.error);
-      else toast.success("Highlight removed");
+      else toast.success("Moment removed");
     });
   }
 
@@ -91,7 +91,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Highlights carousel</CardTitle>
+          <CardTitle>Moments carousel</CardTitle>
           <CardAction>
             <Button
               variant="outline"
@@ -106,7 +106,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
         <CardContent>
           {!highlights.length ? (
             <p className="text-sm text-muted-foreground">
-              No highlights yet. Add a past event or social post to feature
+              No moments yet. Add a past event or social post to feature
               below Upcoming events on the homepage.
             </p>
           ) : (
@@ -229,7 +229,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Remove highlight?</DialogTitle>
+            <DialogTitle>Remove moment?</DialogTitle>
             <DialogDescription>
               “{toDelete?.caption}” will be removed from the homepage
               carousel.
@@ -306,7 +306,7 @@ function HighlightForm({
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     if (!existing && !image) {
-      toast.error("Add an image for this highlight");
+      toast.error("Add an image for this moment");
       return;
     }
 
@@ -334,7 +334,7 @@ function HighlightForm({
         toast.error(result.error);
         return;
       }
-      toast.success(existing ? "Highlight updated" : "Highlight added");
+      toast.success(existing ? "Moment updated" : "Moment added");
       onDone();
     });
   }
@@ -343,7 +343,7 @@ function HighlightForm({
     <form onSubmit={handleSave} className="flex min-h-0 flex-1 flex-col">
       <DialogHeader className="border-b border-border p-4 pr-12">
         <DialogTitle>
-          {existing ? "Edit highlight" : "Add highlight"}
+          {existing ? "Edit moment" : "Add moment"}
         </DialogTitle>
         <DialogDescription>
           Shown in a carousel below Upcoming events on the homepage.
@@ -375,7 +375,7 @@ function HighlightForm({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={shownImage}
-                  alt="Highlight preview"
+                  alt="Moment preview"
                   className="max-h-32 rounded-md object-contain"
                 />
                 <span>Click to replace</span>
@@ -423,7 +423,7 @@ function HighlightForm({
             className="h-9"
           />
           <p className="text-xs text-muted-foreground">
-            e.g. the Facebook or Instagram post this highlight came from.
+            e.g. the Facebook or Instagram post this moment came from.
           </p>
         </div>
       </div>
