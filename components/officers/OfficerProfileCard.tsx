@@ -33,7 +33,8 @@ export function OfficerProfileCard({ officer }: { officer: Officer }) {
         type="button"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        aria-label={`${officer.display_name}, ${officer.title}. View profile`}
+        // No aria-label: the visible name, title and "View profile" form the
+        // accessible name, so voice-control users can say what they see.
         // Only transform and opacity animate (GPU-friendly); the hover shadow
         // lives on ::after and fades in rather than repainting box-shadow.
         className="group relative block h-full w-full rounded-xl text-left outline-none transition-transform duration-500 ease-smooth after:pointer-events-none after:absolute after:inset-0 after:rounded-xl after:opacity-0 after:shadow-[0_20px_40px_-16px_rgb(20_6_97/0.4)] after:transition-opacity after:duration-500 after:ease-smooth hover:after:opacity-100 focus-visible:ring-3 focus-visible:ring-ring motion-safe:hover:-translate-y-1.5"
@@ -55,12 +56,12 @@ export function OfficerProfileCard({ officer }: { officer: Officer }) {
             <span className="block font-wide text-[0.6rem] leading-relaxed uppercase tracking-[0.12em] text-brand-violet">
               {officer.title}
             </span>
-            <span
-              aria-hidden
-              className="mt-auto inline-flex items-center gap-1 pt-2 text-xs font-medium text-muted-foreground transition-colors duration-500 ease-smooth group-hover:text-brand-indigo"
-            >
+            <span className="mt-auto inline-flex items-center gap-1 pt-2 text-xs font-medium text-muted-foreground transition-colors duration-500 ease-smooth group-hover:text-brand-indigo">
               View profile
-              <ArrowRightIcon className="size-3.5 transition-transform duration-500 ease-smooth motion-safe:group-hover:translate-x-1" />
+              <ArrowRightIcon
+                aria-hidden
+                className="size-3.5 transition-transform duration-500 ease-smooth motion-safe:group-hover:translate-x-1"
+              />
             </span>
           </span>
         </span>

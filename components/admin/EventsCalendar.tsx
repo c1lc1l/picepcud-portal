@@ -7,7 +7,7 @@ import {
   ExternalLinkIcon,
   MapPinIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   longDateLabel,
   manilaDateKey,
@@ -257,21 +257,17 @@ export function EventsCalendar({
                       </span>
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    nativeButton={false}
-                    render={
-                      <a
-                        href={ev.luma_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    }
+                  <a
+                    href={ev.luma_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                    )}
                   >
                     <ExternalLinkIcon />
                     Luma
-                  </Button>
+                  </a>
                 </li>
               );
             })}

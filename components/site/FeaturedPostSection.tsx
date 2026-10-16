@@ -1,7 +1,8 @@
 import { ArrowUpRightIcon } from "lucide-react";
 import { LinkHostIcon } from "@/components/icons/SocialIcons";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import type { FeaturedPost } from "@/lib/featured";
+import { cn } from "@/lib/utils";
 
 /** Homepage spotlight for a chapter post (e.g. a Facebook announcement). */
 export function FeaturedPostSection({ post }: { post: FeaturedPost }) {
@@ -39,22 +40,19 @@ export function FeaturedPostSection({ post }: { post: FeaturedPost }) {
             {post.body}
           </div>
           {post.link_url && (
-            <Button
-              nativeButton={false}
-              render={
-                <a
-                  href={post.link_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                />
-              }
-              className="mt-8 h-11 rounded-md px-5 text-base"
+            <a
+              href={post.link_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                buttonVariants({ className: "mt-8 h-11 rounded-md px-5 text-base" }),
+              )}
             >
               <LinkHostIcon url={post.link_url} className="size-4" />
               {post.link_label || "View post"}
               <ArrowUpRightIcon data-icon="inline-end" />
               <span className="sr-only">(opens in a new tab)</span>
-            </Button>
+            </a>
           )}
         </div>
       </div>

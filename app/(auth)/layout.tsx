@@ -26,6 +26,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
               width={LOGO.width}
               height={LOGO.height}
               preload
+              sizes="56px"
               className="h-20 w-auto"
             />
             <div>
@@ -46,6 +47,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
               width={LOGO.width}
               height={LOGO.height}
               preload
+              sizes="(min-width: 1280px) 270px, 225px"
               className="h-80 w-auto drop-shadow-[0_12px_24px_rgb(20_6_97/0.25)] xl:h-96"
             />
             <p className="mt-10 font-headline text-6xl leading-[0.9] uppercase text-brand-ink xl:text-7xl">

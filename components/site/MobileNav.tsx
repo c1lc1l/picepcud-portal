@@ -44,9 +44,10 @@ export function MobileNav({ items }: { items: MobileNavItem[] }) {
             className="fixed inset-0"
             onClick={() => setOpen(false)}
           />
-          <nav
+          {/* A plain div: the panel already sits inside the header's
+              "Main" nav, so a second nested nav landmark would duplicate it. */}
+          <div
             id={panelId}
-            aria-label="Main"
             className="absolute inset-x-0 top-full border-y border-brand-violet/20 bg-brand-pearl/95 px-4 py-2 shadow-[0_16px_32px_-16px_rgb(20_6_97/0.35)] backdrop-blur-md"
           >
             <ul className="flex flex-col">
@@ -63,7 +64,7 @@ export function MobileNav({ items }: { items: MobileNavItem[] }) {
                 </li>
               ))}
             </ul>
-          </nav>
+          </div>
         </>
       )}
     </div>

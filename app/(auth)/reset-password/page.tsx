@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TriangleAlertIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 import { ResetPasswordForm } from "./ResetPasswordForm";
 
 export const metadata: Metadata = {
@@ -31,13 +32,14 @@ export default async function ResetPasswordPage() {
           only be used once.
         </p>
       </div>
-      <Button
-        nativeButton={false}
-        render={<Link href="/forgot-password" />}
-        className="mt-6 h-11 w-full rounded-md text-base"
+      <Link
+        href="/forgot-password"
+        className={cn(
+          buttonVariants({ className: "mt-6 h-11 w-full rounded-md text-base" }),
+        )}
       >
         Request a new link
-      </Button>
+      </Link>
     </>
   );
 }

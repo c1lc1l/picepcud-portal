@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowUpRightIcon, ImagePlusIcon, XIcon } from "lucide-react";
 import { LinkHostIcon } from "@/components/icons/SocialIcons";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -17,6 +17,7 @@ import {
   splitInlineHashtags,
   type Highlight,
 } from "@/lib/highlights/types";
+import { cn } from "@/lib/utils";
 
 /** Cards show a few tags and a "+N" count; the pop-up shows them all. */
 const CARD_TAG_LIMIT = 3;
@@ -128,12 +129,12 @@ export function HighlightCardFace({
         {tags.length > 0 && (
           <HashtagChips tags={tags} limit={CARD_TAG_LIMIT} className="pt-1" />
         )}
-        <span
-          aria-hidden
-          className="mt-auto inline-flex items-center gap-1 pt-2 text-xs font-medium text-muted-foreground transition-colors duration-500 ease-smooth group-hover:text-brand-indigo"
-        >
+        <span className="mt-auto inline-flex items-center gap-1 pt-2 text-xs font-medium text-muted-foreground transition-colors duration-500 ease-smooth group-hover:text-brand-indigo">
           View post
-          <ArrowUpRightIcon className="size-3.5 transition-transform duration-500 ease-smooth motion-safe:group-hover:translate-x-0.5 motion-safe:group-hover:-translate-y-0.5" />
+          <ArrowUpRightIcon
+            aria-hidden
+            className="size-3.5 transition-transform duration-500 ease-smooth motion-safe:group-hover:translate-x-0.5 motion-safe:group-hover:-translate-y-0.5"
+          />
         </span>
       </span>
     </span>
@@ -146,7 +147,6 @@ export function HighlightCard({ highlight }: { highlight: Highlight }) {
   const [open, setOpen] = useState(false);
   const imageUrl = highlightPhotoUrl(highlight.image_path);
   const { body, tags } = splitHashtags(highlight.caption);
-  const label = highlight.title || body || highlight.caption;
 
   return (
     <>
@@ -154,7 +154,7 @@ export function HighlightCard({ highlight }: { highlight: Highlight }) {
         type="button"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        aria-label={`${label}. View full post`}
+        // No aria-label: the card's visible text is its accessible name.
         // Only transform and opacity animate (GPU-friendly); the hover shadow
         // lives on ::after and fades in rather than repainting box-shadow.
         className="group relative block h-full w-full rounded-2xl text-left outline-none transition-transform duration-500 ease-smooth after:pointer-events-none after:absolute after:inset-0 after:rounded-2xl after:opacity-0 after:shadow-[0_20px_40px_-16px_rgb(20_6_97/0.4)] after:transition-opacity after:duration-500 after:ease-smooth hover:after:opacity-100 focus-visible:ring-3 focus-visible:ring-ring motion-safe:hover:-translate-y-1.5"
@@ -199,23 +199,22 @@ export function HighlightCard({ highlight }: { highlight: Highlight }) {
             )}
             {tags.length > 0 && <HashtagChips tags={tags} />}
             {highlight.link_url && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-1 w-fit"
-                nativeButton={false}
-                render={
-                  <a
-                    href={highlight.link_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  />
-                }
+              <a
+                href={highlight.link_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  buttonVariants({
+                    variant: "outline",
+                    size: "sm",
+                    className: "mt-1 w-fit",
+                  }),
+                )}
               >
                 <LinkHostIcon url={highlight.link_url} className="size-4" />
                 View original post
                 <span className="sr-only">(opens in a new tab)</span>
-              </Button>
+              </a>
             )}
           </div>
           {/* Solid chip so the close control stays visible over dark images. */}

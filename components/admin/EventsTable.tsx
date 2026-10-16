@@ -5,7 +5,8 @@ import { ExternalLinkIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { deleteEvent, toggleEventStatus } from "@/app/actions/admin-events";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -97,17 +98,15 @@ export function EventsTable({
   function actions(ev: EventRow, isActive: boolean) {
     return (
       <>
-        <Button
-          variant="outline"
-          size="sm"
-          nativeButton={false}
-          render={
-            <a href={ev.luma_url} target="_blank" rel="noopener noreferrer" />
-          }
+        <a
+          href={ev.luma_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
         >
           <ExternalLinkIcon />
           Luma
-        </Button>
+        </a>
         <Button
           variant="outline"
           size="sm"

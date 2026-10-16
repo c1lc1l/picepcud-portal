@@ -38,6 +38,7 @@ export function PortalHeader({
             width={810}
             height={1154}
             className="h-9 w-auto"
+            sizes="26px"
             preload
           />
           <span className="font-display text-xl font-extrabold uppercase tracking-wide">

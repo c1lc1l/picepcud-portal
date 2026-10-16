@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { submitPayment } from "@/app/actions/payments";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -198,20 +198,16 @@ export function GcashUploadDialog({
                         Paying from this phone? Save the QR, then choose
                         &ldquo;Upload QR&rdquo; in GCash.
                       </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        nativeButton={false}
-                        render={
-                          <a
-                            href={`/payments/gcash-qr?v=${encodeURIComponent(gcash.version)}&download=1`}
-                            download
-                          />
-                        }
+                      <a
+                        href={`/payments/gcash-qr?v=${encodeURIComponent(gcash.version)}&download=1`}
+                        download
+                        className={cn(
+                          buttonVariants({ variant: "outline", size: "sm" }),
+                        )}
                       >
                         <DownloadIcon />
                         Save QR
-                      </Button>
+                      </a>
                     </div>
                   )}
                   <div className="flex min-w-0 flex-col items-center gap-1 text-center sm:items-start sm:text-left">

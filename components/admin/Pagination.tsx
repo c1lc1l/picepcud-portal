@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 /** Page numbers to show: first, last, and a window around the current one. */
 function pageItems(page: number, totalPages: number) {
@@ -115,20 +116,19 @@ function PageButton({
     );
   }
   return (
-    <Button
-      variant={current ? "default" : "outline"}
-      size="sm"
-      className={current ? "min-w-8 tabular-nums" : className}
-      nativeButton={false}
-      render={
-        <Link
-          href={href}
-          aria-current={current ? "page" : undefined}
-          {...props}
-        />
-      }
+    <Link
+      href={href}
+      aria-current={current ? "page" : undefined}
+      className={cn(
+        buttonVariants({
+          variant: current ? "default" : "outline",
+          size: "sm",
+          className: current ? "min-w-8 tabular-nums" : className,
+        }),
+      )}
+      {...props}
     >
       {children}
-    </Button>
+    </Link>
   );
 }

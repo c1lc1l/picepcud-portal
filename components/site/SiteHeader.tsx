@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MobileNav } from "@/components/site/MobileNav";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { isOfficerDirectoryLive } from "@/lib/officers/queries";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +42,7 @@ export async function SiteHeader({
             width={810}
             height={1154}
             className="h-11 w-auto"
+            sizes="32px"
             preload
           />
           <span className="flex flex-col leading-none">
@@ -78,14 +79,12 @@ export async function SiteHeader({
           >
             Log in
           </Link>
-          <Button
-            nativeButton={false}
-            render={<Link href="/register" />}
-            size="lg"
-            className="px-3.5"
+          <Link
+            href="/register"
+            className={cn(buttonVariants({ size: "lg", className: "px-3.5" }))}
           >
             Join
-          </Button>
+          </Link>
           <MobileNav
             items={[
               {

@@ -9,7 +9,7 @@ import {
 import { ExportRosterButton } from "@/components/admin/ExportRosterButton";
 import { Pagination } from "@/components/admin/Pagination";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -26,6 +26,7 @@ import {
   yearLevelLabel,
 } from "@/lib/members";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Members | Admin | PICE PCUD" };
 
@@ -122,14 +123,12 @@ export default async function AdminMembersPage({
           Apply
         </Button>
         {filtered && (
-          <Button
-            variant="ghost"
-            className="h-9"
-            nativeButton={false}
-            render={<Link href="/admin/members" />}
+          <Link
+            href="/admin/members"
+            className={cn(buttonVariants({ variant: "ghost", className: "h-9" }))}
           >
             Clear
-          </Button>
+          </Link>
         )}
       </form>
 

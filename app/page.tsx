@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 import { EventCard } from "@/components/events/EventCard";
 import { OfficerProfileCard } from "@/components/officers/OfficerProfileCard";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { FeaturedPostSection } from "@/components/site/FeaturedPostSection";
 import { HighlightsCarousel } from "@/components/site/HighlightsCarousel";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -15,6 +15,7 @@ import { getFeaturedPost } from "@/lib/featured";
 import { getPublicHighlights } from "@/lib/highlights/queries";
 import { getPublicRoster } from "@/lib/officers/queries";
 import { sortOfficers } from "@/lib/officers/validation";
+import { cn } from "@/lib/utils";
 
 const LOGO = { src: "/brand/pice-pcud-logo.png", width: 810, height: 1154 };
 
@@ -47,7 +48,10 @@ export default async function Home() {
           width={LOGO.width}
           height={LOGO.height}
           aria-hidden
-          loading="eager"
+          // Lazy (not eager): it's hidden below lg, and an eager copy still
+          // downloaded there at full size, competing with the hero emblem
+          // (the mobile LCP). On desktop it's in view, so it loads at once.
+          sizes="640px"
           className="emblem-ghost pointer-events-none absolute top-[56%] right-[-20%] hidden h-[150%] w-auto -translate-y-1/2 opacity-35 lg:block"
         />
 
@@ -58,6 +62,8 @@ export default async function Home() {
             width={LOGO.width}
             height={LOGO.height}
             preload
+            // Rendered widths of h-40 / sm:h-56 / md:h-80 at the logo's ratio.
+            sizes="(min-width: 768px) 225px, (min-width: 640px) 158px, 113px"
             className="h-40 w-auto drop-shadow-[0_12px_24px_rgb(20_6_97/0.25)] sm:h-56 md:h-80"
           />
 
@@ -76,22 +82,29 @@ export default async function Home() {
               {homeContent.about}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button
-                nativeButton={false}
-                render={<Link href="/register" />}
-                className="h-11 rounded-md px-5 text-base"
+              <Link
+                href="/register"
+                className={cn(
+                  buttonVariants({
+                    className: "h-11 rounded-md px-5 text-base",
+                  }),
+                )}
               >
                 Join the chapter
                 <ArrowRightIcon data-icon="inline-end" />
-              </Button>
-              <Button
-                nativeButton={false}
-                render={<Link href="/login" />}
-                variant="outline"
-                className="h-11 rounded-md border-brand-ink/25 bg-white/60 px-5 text-base backdrop-blur-sm hover:bg-white/85"
+              </Link>
+              <Link
+                href="/login"
+                className={cn(
+                  buttonVariants({
+                    variant: "outline",
+                    className:
+                      "h-11 rounded-md border-brand-ink/25 bg-white/60 px-5 text-base backdrop-blur-sm hover:bg-white/85",
+                  }),
+                )}
               >
                 Member login
-              </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -125,7 +138,8 @@ export default async function Home() {
             <hr className="chrome-rule mt-5 mb-10 border-white/20" />
 
             {error ? (
-              <p role="alert" className="text-sm text-destructive">
+              // Light text: the destructive red is unreadable on this violet band.
+              <p role="alert" className="text-sm font-medium text-white">
                 Events couldn&apos;t be loaded. Please try again later.
               </p>
             ) : !events?.length ? (
@@ -219,6 +233,7 @@ export default async function Home() {
             width={LOGO.width}
             height={LOGO.height}
             aria-hidden
+            sizes="640px"
             className="emblem-ghost pointer-events-none absolute top-1/2 right-[-4%] hidden h-[150%] w-auto -translate-y-1/2 opacity-15 md:block"
           />
           <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:py-24">
@@ -232,14 +247,18 @@ export default async function Home() {
               <p className="mt-5 max-w-sm leading-relaxed">
                 {homeContent.membership.intro}
               </p>
-              <Button
-                nativeButton={false}
-                render={<Link href="/register" />}
-                className="mt-8 h-11 rounded-md bg-brand-pearl px-5 text-base text-brand-indigo hover:bg-white"
+              <Link
+                href="/register"
+                className={cn(
+                  buttonVariants({
+                    className:
+                      "mt-8 h-11 rounded-md bg-brand-pearl px-5 text-base text-brand-indigo hover:bg-white",
+                  }),
+                )}
               >
                 Create your account
                 <ArrowRightIcon data-icon="inline-end" />
-              </Button>
+              </Link>
             </div>
             <ol className="md:max-w-xl">
               {homeContent.membership.steps.map((step, i) => (
