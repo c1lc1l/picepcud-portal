@@ -5,23 +5,30 @@ import { EventCard } from "@/components/events/EventCard";
 import { OfficerProfileCard } from "@/components/officers/OfficerProfileCard";
 import { Button } from "@/components/ui/button";
 import { FeaturedPostSection } from "@/components/site/FeaturedPostSection";
+import { HighlightsCarousel } from "@/components/site/HighlightsCarousel";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { homeContent } from "@/lib/content/home";
 import { getUpcomingEvents } from "@/lib/events";
 import { getFeaturedPost } from "@/lib/featured";
+import { getPublicHighlights } from "@/lib/highlights/queries";
 import { getPublicRoster } from "@/lib/officers/queries";
 import { sortOfficers } from "@/lib/officers/validation";
 
 const LOGO = { src: "/brand/pice-pcud-logo.png", width: 810, height: 1154 };
 
 export default async function Home() {
-  const [{ data: events, error }, roster, { post: featured }] =
-    await Promise.all([
-      getUpcomingEvents(2),
-      getPublicRoster(),
-      getFeaturedPost(),
-    ]);
+  const [
+    { data: events, error },
+    roster,
+    { post: featured },
+    { data: highlights },
+  ] = await Promise.all([
+    getUpcomingEvents(2),
+    getPublicRoster(),
+    getFeaturedPost(),
+    getPublicHighlights(),
+  ]);
   // Homepage shows the executive board; /officers lists everyone.
   const executive = sortOfficers(roster.officers).filter(
     (o) => o.officer_group === "executive",
@@ -97,42 +104,63 @@ export default async function Home() {
         {/* Upcoming events */}
         <section
           aria-labelledby="upcoming-heading"
-          className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 md:py-24"
+          className="bg-brand-violet"
         >
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <h2
-              id="upcoming-heading"
-              className="font-headline text-6xl leading-none uppercase text-brand-ink md:text-7xl"
-            >
-              Upcoming events
-            </h2>
-            <Link
-              href="/events"
-              className="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-brand-indigo underline-offset-4 hover:underline"
-            >
-              All events <ArrowRightIcon className="size-4" />
-            </Link>
-          </div>
-          <hr className="chrome-rule mt-5 mb-10" />
+          <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 md:py-24">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <h2
+                id="upcoming-heading"
+                className="font-headline text-6xl leading-none uppercase text-white md:text-7xl"
+              >
+                Upcoming events
+              </h2>
+              <Link
+                href="/events"
+                className="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-white underline-offset-4 hover:underline"
+              >
+                All events <ArrowRightIcon className="size-4" />
+              </Link>
+            </div>
+            <hr className="chrome-rule mt-5 mb-10 border-white/20" />
 
-          {error ? (
-            <p role="alert" className="text-sm text-destructive">
-              Events couldn&apos;t be loaded. Please try again later.
-            </p>
-          ) : !events?.length ? (
-            <p role="status" className="py-8 text-muted-foreground">
-              No upcoming events are scheduled yet. Check back soon.
-            </p>
-          ) : (
-            <ul className="grid gap-10 md:grid-cols-2 md:gap-12">
-              {events.map((ev) => (
-                <li key={ev.id}>
-                  <EventCard event={ev} />
-                </li>
-              ))}
-            </ul>
-          )}
+            {error ? (
+              <p role="alert" className="text-sm text-destructive">
+                Events couldn&apos;t be loaded. Please try again later.
+              </p>
+            ) : !events?.length ? (
+              <p role="status" className="py-8 text-white/70">
+                No upcoming events are scheduled yet. Check back soon.
+              </p>
+            ) : (
+              <ul className="grid gap-10 md:grid-cols-2 md:gap-12">
+                {events.map((ev) => (
+                  <li key={ev.id}>
+                    <EventCard event={ev} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
+
+        {/* Highlights — past events and social posts, admin-curated. */}
+        {highlights && highlights.length > 0 && (
+          <section
+            aria-labelledby="highlights-heading"
+            className="border-t border-border bg-white/50"
+          >
+            <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 md:py-24">
+              <h2
+                id="highlights-heading"
+                className="font-headline text-6xl leading-none uppercase text-brand-ink md:text-7xl"
+              >
+                Highlights
+              </h2>
+              <hr className="chrome-rule mt-5 mb-10" />
+              <HighlightsCarousel highlights={highlights} />
+            </div>
+          </section>
+        )}
 
         {/* Chapter officers — shown only while the roster is live. */}
         {executive.length > 0 && (
