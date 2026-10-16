@@ -23,7 +23,7 @@ export function HighlightsCarousel({ highlights }: { highlights: Highlight[] }) 
     <div>
       <ul
         ref={scrollerRef}
-        className="flex snap-x snap-mandatory gap-6 overflow-x-auto px-1 pt-1 pb-3 scrollbar-none"
+        className="flex snap-x snap-mandatory gap-6 overflow-x-auto px-1 pt-1 pb-3 scrollbar-none mask-[linear-gradient(90deg,transparent,black_24px,black_calc(100%-24px),transparent)] sm:mask-none"
       >
         {highlights.map((h) => (
           <li key={h.id} className="w-56 shrink-0 snap-start sm:w-64">
