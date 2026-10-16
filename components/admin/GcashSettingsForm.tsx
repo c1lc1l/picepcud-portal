@@ -101,8 +101,9 @@ export function GcashSettingsForm({
         <CardHeader>
           <CardTitle>GCash account</CardTitle>
           <CardDescription>
-            Shown to members when they pay their dues. Update this whenever the
-            receiving account changes, and upload the matching QR code.
+            Shown to members when they settle their membership fee. Update this
+            whenever the receiving account changes, and upload the matching QR
+            code.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 pt-2 md:grid-cols-[minmax(0,1fr)_14rem]">

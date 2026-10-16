@@ -54,7 +54,7 @@ function duesState(latest: PaymentRow | undefined) {
       tone: "neutral",
       Icon: WalletIcon,
       title: "No payment submitted yet",
-      body: "Pay your chapter dues through GCash, then upload your receipt here so an officer can verify it.",
+      body: "Settle your membership fee through GCash, then upload your receipt here so an officer can verify it.",
       action: { label: "Pay via GCash", variant: "default" },
     } as const;
   }
@@ -146,7 +146,7 @@ export default async function DashboardPage() {
                 />
                 <div>
                   <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                    Dues
+                    Membership fee
                   </p>
                   <h2
                     id="dues-heading"
