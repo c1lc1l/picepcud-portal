@@ -81,7 +81,7 @@ export default async function AdminPaymentsPage({
 
       <nav
         aria-label="Filter by status"
-        className="flex w-fit max-w-full gap-1 overflow-x-auto rounded-lg bg-muted p-1"
+        className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 sm:flex sm:w-fit"
       >
         {FILTERS.map((f) => {
           const isActive = active === f.value;
@@ -91,7 +91,7 @@ export default async function AdminPaymentsPage({
               href={`/admin/payments?status=${f.value}`}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+                "inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
                 isActive
                   ? "bg-card text-brand-ink shadow-sm ring-1 ring-foreground/10"
                   : "text-muted-foreground hover:text-brand-ink",

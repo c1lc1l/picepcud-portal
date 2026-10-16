@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { MobileNav } from "@/components/site/MobileNav";
 import { Button } from "@/components/ui/button";
 import { isOfficerDirectoryLive } from "@/lib/officers/queries";
 import { cn } from "@/lib/utils";
@@ -57,7 +58,7 @@ export async function SiteHeader({
           <Link
             href="/events"
             aria-current={current === "events" ? "page" : undefined}
-            className={navLinkClass}
+            className={cn(navLinkClass, "hidden sm:block")}
           >
             Events
           </Link>
@@ -73,7 +74,7 @@ export async function SiteHeader({
           <Link
             href="/login"
             aria-current={current === "login" ? "page" : undefined}
-            className={navLinkClass}
+            className={cn(navLinkClass, "hidden sm:block")}
           >
             Log in
           </Link>
@@ -85,6 +86,25 @@ export async function SiteHeader({
           >
             Join
           </Button>
+          <MobileNav
+            items={[
+              {
+                href: "/events",
+                label: "Events",
+                current: current === "events",
+              },
+              ...(showOfficers
+                ? [
+                    {
+                      href: "/officers",
+                      label: "Officers",
+                      current: current === "officers",
+                    },
+                  ]
+                : []),
+              { href: "/login", label: "Log in", current: current === "login" },
+            ]}
+          />
         </nav>
       </div>
     </header>

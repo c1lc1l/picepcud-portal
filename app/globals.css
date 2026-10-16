@@ -215,9 +215,18 @@
         #cfcde3 22%,
         #efeef3 48%,
         #d6d3e6 64%,
-        #5a4a95 86%,
-        #2e1f72 100%
+        var(--sweep-dusk, #5a4a95) 86%,
+        var(--sweep-night, #2e1f72) 100%
       );
+  }
+
+  /* Phones: copy spans the full width, so the right edge stays mid-tone
+     (≥3:1 for the violet tagline) instead of fading to night indigo. */
+  @media (width < 40rem) {
+    .cover-sweep {
+      --sweep-dusk: #b5b1d9;
+      --sweep-night: #9d97cc;
+    }
   }
 
   /* Bevelled silver hairline — the logo's chrome edge as a divider. */

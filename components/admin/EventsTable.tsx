@@ -78,98 +78,138 @@ export function EventsTable({
     });
   }
 
+  function statusBadge(isActive: boolean) {
+    return (
+      <Badge
+        variant="outline"
+        className={
+          isActive
+            ? "border-0 bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300"
+            : "border-0 bg-muted text-muted-foreground"
+        }
+      >
+        {isActive ? "Active" : "Inactive"}
+      </Badge>
+    );
+  }
+
+  // Shared by the phone cards and the table rows.
+  function actions(ev: EventRow, isActive: boolean) {
+    return (
+      <>
+        <Button
+          variant="outline"
+          size="sm"
+          nativeButton={false}
+          render={
+            <a href={ev.luma_url} target="_blank" rel="noopener noreferrer" />
+          }
+        >
+          <ExternalLinkIcon />
+          Luma
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={pendingId === ev.id}
+          onClick={() => toggle(ev, !isActive)}
+        >
+          {isActive ? "Deactivate" : "Activate"}
+        </Button>
+        <Button variant="destructive" size="sm" onClick={() => setToDelete(ev)}>
+          <Trash2Icon />
+          Delete
+        </Button>
+      </>
+    );
+  }
+
   return (
     <>
-      <Table className="min-w-160">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {events.length === 0 ? (
+      {/* Phones: one card per event instead of a sideways-scrolling table. */}
+      {events.length === 0 ? (
+        <p className="px-2 py-8 text-center text-sm text-muted-foreground md:hidden">
+          {emptyMessage}
+        </p>
+      ) : (
+        <ul className="divide-y divide-border md:hidden">
+          {events.map((ev) => {
+            const isActive = active[ev.id] ?? ev.is_active;
+            return (
+              <li key={ev.id} className="flex flex-col gap-3 px-2 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium text-brand-ink">{ev.title}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {dateFormat.format(new Date(ev.event_date))}
+                      {ev.is_past && " · Past"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {ev.location}
+                    </p>
+                  </div>
+                  {statusBadge(isActive)}
+                </div>
+                <div className="flex gap-2 *:flex-1">
+                  {actions(ev, isActive)}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <div className="hidden md:block">
+        <Table className="min-w-160">
+          <TableHeader>
             <TableRow>
-              <TableCell
-                colSpan={5}
-                className="h-24 text-center text-muted-foreground"
-              >
-                {emptyMessage}
-              </TableCell>
+              <TableHead>Title</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ) : (
-            events.map((ev) => {
-              const isActive = active[ev.id] ?? ev.is_active;
-              return (
-                <TableRow key={ev.id}>
-                  <TableCell className="font-medium text-brand-ink">
-                    {ev.title}
-                  </TableCell>
-                  <TableCell>
-                    {dateFormat.format(new Date(ev.event_date))}
-                    {ev.is_past && (
-                      <span className="block text-xs text-muted-foreground">
-                        Past
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>{ev.location}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={
-                        isActive
-                          ? "border-0 bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300"
-                          : "border-0 bg-muted text-muted-foreground"
-                      }
-                    >
-                      {isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        nativeButton={false}
-                        render={
-                          <a
-                            href={ev.luma_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          />
-                        }
-                      >
-                        <ExternalLinkIcon />
-                        Luma
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={pendingId === ev.id}
-                        onClick={() => toggle(ev, !isActive)}
-                      >
-                        {isActive ? "Deactivate" : "Activate"}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setToDelete(ev)}
-                      >
-                        <Trash2Icon />
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {events.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="h-24 text-center text-muted-foreground"
+                >
+                  {emptyMessage}
+                </TableCell>
+              </TableRow>
+            ) : (
+              events.map((ev) => {
+                const isActive = active[ev.id] ?? ev.is_active;
+                return (
+                  <TableRow key={ev.id}>
+                    <TableCell className="font-medium text-brand-ink">
+                      {ev.title}
+                    </TableCell>
+                    <TableCell>
+                      {dateFormat.format(new Date(ev.event_date))}
+                      {ev.is_past && (
+                        <span className="block text-xs text-muted-foreground">
+                          Past
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>{ev.location}</TableCell>
+                    <TableCell>{statusBadge(isActive)}</TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        {actions(ev, isActive)}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       <Dialog
         open={toDelete !== null}

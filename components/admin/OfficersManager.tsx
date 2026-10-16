@@ -453,7 +453,7 @@ function OfficerForm({
               existing?.officer_group ??
               (editing.mode === "create" ? editing.group : "executive")
             }
-            className="h-9 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="h-9 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none md:text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             {OFFICER_GROUPS.map((g) => (
               <option key={g.key} value={g.key}>

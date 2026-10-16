@@ -99,7 +99,7 @@ export function EventsBrowser({
           value={status}
           onChange={(e) => setStatus(e.target.value as Status)}
           aria-label="Filter by status"
-          className="h-9 rounded-lg border border-input bg-card px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-9 rounded-lg border border-input bg-card px-2.5 text-base outline-none md:text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           {STATUS.map((s) => (
             <option key={s.value} value={s.value}>

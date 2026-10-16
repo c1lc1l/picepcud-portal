@@ -126,98 +126,151 @@ export function PaymentsTable({ payments }: { payments: PaymentRow[] }) {
     setError(null);
   }
 
+  // Shared by the phone cards and the table rows.
+  function actions(p: PaymentRow) {
+    return (
+      <>
+        <Button variant="outline" size="sm" onClick={() => openReceipt(p)}>
+          <EyeIcon />
+          Receipt
+        </Button>
+        {p.status === "pending" && (
+          <>
+            <Button
+              size="sm"
+              disabled={reviewing}
+              onClick={() => setReview({ payment: p, action: "approve" })}
+            >
+              <CheckIcon />
+              Approve
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={reviewing}
+              onClick={() => {
+                setReason("");
+                setReview({ payment: p, action: "reject" });
+              }}
+            >
+              <XIcon />
+              Reject
+            </Button>
+          </>
+        )}
+      </>
+    );
+  }
+
+  const rows = payments.map((row) => ({
+    ...row,
+    status: statuses[row.id] ?? row.status,
+  }));
+
   return (
     <>
-      <Table className="min-w-180">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Member</TableHead>
-            <TableHead>Reference no.</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-            <TableHead>Submitted</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">
-              <span className="sr-only">Actions</span>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {payments.length === 0 ? (
-            <TableRow>
-              <TableCell
-                colSpan={6}
-                className="h-24 text-center text-muted-foreground"
-              >
-                No payments found.
-              </TableCell>
-            </TableRow>
-          ) : (
-            payments.map((row) => {
-              const p = { ...row, status: statuses[row.id] ?? row.status };
-              return (
-                <TableRow key={p.id}>
-                  <TableCell>
-                    <p className="font-medium text-brand-ink">{p.full_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {p.student_id} · {p.email}
-                    </p>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {p.reference_no}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
+      {/* Phones: one card per payment, actions as full-width buttons. */}
+      {rows.length === 0 ? (
+        <p className="px-2 py-8 text-center text-sm text-muted-foreground md:hidden">
+          No payments found.
+        </p>
+      ) : (
+        <ul className="divide-y divide-border md:hidden">
+          {rows.map((p) => (
+            <li key={p.id} className="flex flex-col gap-3 px-2 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-brand-ink">{p.full_name}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {p.student_id} · {p.email}
+                  </p>
+                </div>
+                <StatusBadge status={p.status} />
+              </div>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <div>
+                  <dt className="text-xs text-muted-foreground">Amount</dt>
+                  <dd className="font-medium tabular-nums text-brand-ink">
                     {peso.format(p.amount)}
-                  </TableCell>
-                  <TableCell>
-                    {dateFormat.format(new Date(p.created_at))}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={p.status} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openReceipt(p)}
-                      >
-                        <EyeIcon />
-                        Receipt
-                      </Button>
-                      {p.status === "pending" && (
-                        <>
-                          <Button
-                            size="sm"
-                            disabled={reviewing}
-                            onClick={() =>
-                              setReview({ payment: p, action: "approve" })
-                            }
-                          >
-                            <CheckIcon />
-                            Approve
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            disabled={reviewing}
-                            onClick={() => {
-                              setReason("");
-                              setReview({ payment: p, action: "reject" });
-                            }}
-                          >
-                            <XIcon />
-                            Reject
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">
+                    Reference no.
+                  </dt>
+                  <dd className="font-mono text-xs leading-5 break-all">
+                    {p.reference_no}
+                  </dd>
+                </div>
+                <div className="col-span-2">
+                  <dt className="text-xs text-muted-foreground">Submitted</dt>
+                  <dd>{dateFormat.format(new Date(p.created_at))}</dd>
+                </div>
+              </dl>
+              <div className="flex gap-2 *:flex-1">{actions(p)}</div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="hidden md:block">
+        <Table className="min-w-180">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Member</TableHead>
+              <TableHead>Reference no.</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead>Submitted</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">
+                <span className="sr-only">Actions</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="h-24 text-center text-muted-foreground"
+                >
+                  No payments found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows.map((p) => {
+                return (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      <p className="font-medium text-brand-ink">
+                        {p.full_name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {p.student_id} · {p.email}
+                      </p>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {p.reference_no}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {peso.format(p.amount)}
+                    </TableCell>
+                    <TableCell>
+                      {dateFormat.format(new Date(p.created_at))}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={p.status} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">{actions(p)}</div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       <Dialog open={selected !== null} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-2xl">

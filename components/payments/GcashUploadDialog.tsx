@@ -2,7 +2,13 @@
 
 import { useRef, useState, type ComponentProps } from "react";
 import imageCompression from "browser-image-compression";
-import { CheckIcon, CopyIcon, ImagePlus, Loader2 } from "lucide-react";
+import {
+  CheckIcon,
+  CopyIcon,
+  DownloadIcon,
+  ImagePlus,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { submitPayment } from "@/app/actions/payments";
 import { Button } from "@/components/ui/button";
@@ -159,169 +165,206 @@ export function GcashUploadDialog({
           setOpen(next);
         }}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
+        {/* Header and submit stay put; only the middle scrolls, so the
+            submit button is always reachable on short phone screens. */}
+        <DialogContent className="flex max-h-[90dvh] flex-col gap-0 p-0 sm:max-w-md">
+          <DialogHeader className="border-b border-border p-4 pr-12">
             <DialogTitle>Pay via GCash</DialogTitle>
             <DialogDescription>
               Send your payment, then upload the screenshot for verification.
             </DialogDescription>
           </DialogHeader>
 
-          {gcash ? (
-            <div className="flex flex-col items-center gap-4 rounded-lg border bg-muted/40 p-4 sm:flex-row sm:items-center">
-              {gcash.hasQr && (
-                // eslint-disable-next-line @next/next/no-img-element -- served by an authenticated route handler
-                <img
-                  src={`/payments/gcash-qr?v=${encodeURIComponent(gcash.version)}`}
-                  alt={`GCash QR code for ${gcash.accountName}`}
-                  width={410}
-                  height={410}
-                  className="size-44 shrink-0 rounded-md bg-white object-contain"
-                />
-              )}
-              <div className="flex min-w-0 flex-col items-center gap-1 text-center sm:items-start sm:text-left">
-                <p className="text-xs text-muted-foreground">Send to</p>
-                <p className="font-medium text-brand-ink">
-                  {gcash.accountName}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  PICE PCUD {gcash.role}
-                </p>
-                {gcash.number && (
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <span className="font-mono text-sm font-medium text-brand-ink">
-                      {gcash.number}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={copyNumber}
-                      aria-label={
-                        copied ? "Number copied" : "Copy GCash number"
-                      }
-                    >
-                      {copied ? <CheckIcon /> : <CopyIcon />}
-                    </Button>
+          <form
+            onSubmit={handleSubmit}
+            className="flex min-h-0 flex-1 flex-col"
+          >
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+              {gcash ? (
+                <div className="flex flex-col items-center gap-4 rounded-lg border bg-muted/40 p-4 sm:flex-row sm:items-center">
+                  {gcash.hasQr && (
+                    <div className="flex flex-col items-center gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- served by an authenticated route handler */}
+                      <img
+                        src={`/payments/gcash-qr?v=${encodeURIComponent(gcash.version)}`}
+                        alt={`GCash QR code for ${gcash.accountName}`}
+                        width={410}
+                        height={410}
+                        className="size-44 shrink-0 rounded-md bg-white object-contain"
+                      />
+                      {/* A phone can't scan its own screen: save the QR, then
+                      use "Upload QR" inside GCash. */}
+                      <p className="max-w-52 text-center text-xs text-muted-foreground sm:hidden">
+                        Paying from this phone? Save the QR, then choose
+                        &ldquo;Upload QR&rdquo; in GCash.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        nativeButton={false}
+                        render={
+                          <a
+                            href={`/payments/gcash-qr?v=${encodeURIComponent(gcash.version)}&download=1`}
+                            download
+                          />
+                        }
+                      >
+                        <DownloadIcon />
+                        Save QR
+                      </Button>
+                    </div>
+                  )}
+                  <div className="flex min-w-0 flex-col items-center gap-1 text-center sm:items-start sm:text-left">
+                    <p className="text-xs text-muted-foreground">Send to</p>
+                    <p className="font-medium text-brand-ink">
+                      {gcash.accountName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PICE PCUD {gcash.role}
+                    </p>
+                    {gcash.number && (
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <span className="font-mono text-sm font-medium text-brand-ink">
+                          {gcash.number}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={copyNumber}
+                          aria-label={
+                            copied ? "Number copied" : "Copy GCash number"
+                          }
+                        >
+                          {copied ? <CheckIcon /> : <CopyIcon />}
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+              ) : (
+                <p
+                  role="status"
+                  className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900"
+                >
+                  The chapter&apos;s GCash details haven&apos;t been set up yet.
+                  Please contact a chapter officer before paying.
+                </p>
+              )}
+
+              <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+                <li>
+                  Open GCash and scan the QR code, or send to the number above.
+                </li>
+                <li>Enter the exact amount and send the payment.</li>
+                <li>Screenshot the receipt showing the reference number.</li>
+                <li>Fill out the form below and upload the screenshot.</li>
+              </ol>
+
+              <div className="space-y-2">
+                <Label htmlFor="referenceNo">GCash Reference Number</Label>
+                <Input
+                  id="referenceNo"
+                  inputMode="numeric"
+                  placeholder="13-digit reference no."
+                  maxLength={13}
+                  value={referenceNo}
+                  onChange={(e) => setReferenceNo(e.target.value)}
+                  disabled={busy}
+                  required
+                />
               </div>
-            </div>
-          ) : (
-            <p
-              role="status"
-              className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900"
-            >
-              The chapter&apos;s GCash details haven&apos;t been set up yet.
-              Please contact a chapter officer before paying.
-            </p>
-          )}
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount (PHP)</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  inputMode="decimal"
+                  min="1"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  disabled={busy}
+                  required
+                />
+              </div>
 
-          <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
-            <li>
-              Open GCash and scan the QR code, or send to the number above.
-            </li>
-            <li>Enter the exact amount and send the payment.</li>
-            <li>Screenshot the receipt showing the reference number.</li>
-            <li>Fill out the form below and upload the screenshot.</li>
-          </ol>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="referenceNo">GCash Reference Number</Label>
-              <Input
-                id="referenceNo"
-                inputMode="numeric"
-                placeholder="13-digit reference no."
-                maxLength={13}
-                value={referenceNo}
-                onChange={(e) => setReferenceNo(e.target.value)}
-                disabled={busy}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount (PHP)</Label>
-              <Input
-                id="amount"
-                type="number"
-                inputMode="decimal"
-                min="1"
-                step="0.01"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                disabled={busy}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Payment Screenshot</Label>
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => !busy && inputRef.current?.click()}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
+              <div className="space-y-2">
+                <Label>Payment Screenshot</Label>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => !busy && inputRef.current?.click()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      if (!busy) inputRef.current?.click();
+                    }
+                  }}
+                  onDragOver={(e) => {
                     e.preventDefault();
-                    if (!busy) inputRef.current?.click();
-                  }
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragging(true);
-                }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragging(false);
-                  if (!busy) void handleFile(e.dataTransfer.files[0]);
-                }}
-                className={cn(
-                  "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-sm text-muted-foreground transition-colors",
-                  dragging && "border-primary bg-primary/5",
-                  busy && "cursor-not-allowed opacity-60",
-                )}
-              >
-                {stage === "compressing" ? (
-                  <>
-                    <Loader2 className="size-6 animate-spin" />
-                    Compressing image…
-                  </>
-                ) : preview ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={preview}
-                      alt="Payment screenshot preview"
-                      className="max-h-40 rounded-md object-contain"
-                    />
-                    <span>
-                      {Math.round((file?.size ?? 0) / 1024)} KB · click or drop
-                      to replace
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <ImagePlus className="size-6" />
-                    Drag &amp; drop or click to select
-                  </>
-                )}
+                    setDragging(true);
+                  }}
+                  onDragLeave={() => setDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragging(false);
+                    if (!busy) void handleFile(e.dataTransfer.files[0]);
+                  }}
+                  className={cn(
+                    "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-sm text-muted-foreground transition-colors",
+                    dragging && "border-primary bg-primary/5",
+                    busy && "cursor-not-allowed opacity-60",
+                  )}
+                >
+                  {stage === "compressing" ? (
+                    <>
+                      <Loader2 className="size-6 animate-spin" />
+                      Compressing image…
+                    </>
+                  ) : preview ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={preview}
+                        alt="Payment screenshot preview"
+                        className="max-h-40 rounded-md object-contain"
+                      />
+                      <span>
+                        {Math.round((file?.size ?? 0) / 1024)} KB ·{" "}
+                        <span className="sm:hidden">tap to replace</span>
+                        <span className="hidden sm:inline">
+                          click or drop to replace
+                        </span>
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <ImagePlus className="size-6" />
+                      <span className="sm:hidden">
+                        Tap to choose your screenshot
+                      </span>
+                      <span className="hidden sm:inline">
+                        Drag &amp; drop or click to select
+                      </span>
+                    </>
+                  )}
+                </div>
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    void handleFile(e.target.files?.[0]);
+                    e.target.value = "";
+                  }}
+                />
               </div>
-              <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  void handleFile(e.target.files?.[0]);
-                  e.target.value = "";
-                }}
-              />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="m-0">
               <Button type="submit" disabled={busy || !file}>
                 {stage === "uploading" && (
                   <Loader2 className="size-4 animate-spin" />

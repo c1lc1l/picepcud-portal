@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -17,9 +18,44 @@ const SECTIONS = [
 /** Admin section tabs; sits on the bottom edge of the portal band. */
 export function AdminNav() {
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
+  // Which edges have tabs scrolled out of view (phones only, in practice).
+  const [edges, setEdges] = useState({ start: false, end: false });
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const current = nav.querySelector<HTMLElement>('[aria-current="page"]');
+    if (current) {
+      nav.scrollLeft =
+        current.offsetLeft - (nav.clientWidth - current.offsetWidth) / 2;
+    }
+    const update = () =>
+      setEdges({
+        start: nav.scrollLeft > 4,
+        end: nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4,
+      });
+    const frame = requestAnimationFrame(update);
+    nav.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      cancelAnimationFrame(frame);
+      nav.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [pathname]);
+
+  const fade = `linear-gradient(to right, ${
+    edges.start ? "transparent 0, black 2rem" : "black 0"
+  }, ${edges.end ? "black calc(100% - 2rem), transparent 100%" : "black 100%"})`;
 
   return (
-    <nav aria-label="Admin sections" className="-mb-px overflow-x-auto">
+    <nav
+      ref={navRef}
+      aria-label="Admin sections"
+      className="relative -mb-px overflow-x-auto scrollbar-none"
+      style={{ maskImage: fade, WebkitMaskImage: fade }}
+    >
       <ul className="flex gap-1">
         {SECTIONS.map(({ href, label }) => {
           const active =

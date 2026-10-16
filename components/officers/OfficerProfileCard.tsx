@@ -43,7 +43,8 @@ export function OfficerProfileCard({ officer }: { officer: Officer }) {
             <OfficerPortrait
               name={officer.display_name}
               photoUrl={photoUrl}
-              className="aspect-4/5 w-full transition-transform duration-700 ease-smooth motion-safe:group-hover:scale-[1.05]"
+              // Square on phones keeps a two-column board from running long.
+              className="aspect-square w-full object-top transition-transform duration-700 ease-smooth motion-safe:group-hover:scale-[1.05] sm:aspect-4/5"
             />
           </span>
           <span className="flex flex-1 flex-col gap-1.5 p-4">

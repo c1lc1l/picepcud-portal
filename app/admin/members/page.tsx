@@ -109,7 +109,7 @@ export default async function AdminMembersPage({
           name="year"
           defaultValue={year ?? ""}
           aria-label="Filter by year level"
-          className="h-9 rounded-lg border border-input bg-card px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-9 rounded-lg border border-input bg-card px-2.5 text-base outline-none md:text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <option value="">All years</option>
           {YEAR_FILTERS.map((y) => (
@@ -139,53 +139,88 @@ export default async function AdminMembersPage({
         </p>
       ) : (
         <div className={tableFrameClass}>
-          <Table className="min-w-160">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Student ID</TableHead>
-                <TableHead>Year level</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Registered</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!members?.length ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    {filtered
-                      ? "No members match these filters."
-                      : "No members have registered yet."}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                members.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium text-brand-ink">
+          {/* Phones: compact list instead of a sideways-scrolling table. */}
+          {!members?.length ? (
+            <p className="px-2 py-8 text-center text-sm text-muted-foreground md:hidden">
+              {filtered
+                ? "No members match these filters."
+                : "No members have registered yet."}
+            </p>
+          ) : (
+            <ul className="divide-y divide-border md:hidden">
+              {members.map((m) => (
+                <li key={m.id} className="flex flex-col gap-1 px-2 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 font-medium text-brand-ink">
                       {m.full_name}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {m.student_id}
-                    </TableCell>
-                    <TableCell>{yearLevelLabel(m.year_level)}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={m.role === "admin" ? "default" : "secondary"}
-                      >
-                        {m.role === "admin" ? "Admin" : "Member"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {dateFormat.format(new Date(m.created_at))}
+                    </p>
+                    <Badge
+                      variant={m.role === "admin" ? "default" : "secondary"}
+                    >
+                      {m.role === "admin" ? "Admin" : "Member"}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-mono text-xs">{m.student_id}</span> ·{" "}
+                    {yearLevelLabel(m.year_level)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Registered {dateFormat.format(new Date(m.created_at))}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="hidden md:block">
+            <Table className="min-w-160">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Student ID</TableHead>
+                  <TableHead>Year level</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Registered</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {!members?.length ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      {filtered
+                        ? "No members match these filters."
+                        : "No members have registered yet."}
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  members.map((m) => (
+                    <TableRow key={m.id}>
+                      <TableCell className="font-medium text-brand-ink">
+                        {m.full_name}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {m.student_id}
+                      </TableCell>
+                      <TableCell>{yearLevelLabel(m.year_level)}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={m.role === "admin" ? "default" : "secondary"}
+                        >
+                          {m.role === "admin" ? "Admin" : "Member"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {dateFormat.format(new Date(m.created_at))}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 
