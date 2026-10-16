@@ -1,5 +1,6 @@
 export type Highlight = {
   id: string;
+  title: string | null;
   caption: string;
   link_url: string | null;
   image_path: string;

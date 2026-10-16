@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Highlight } from "./types";
 
 const HIGHLIGHT_FIELDS =
-  "id, caption, link_url, image_path, display_order, is_active";
+  "id, title, caption, link_url, image_path, display_order, is_active";
 
 /** Active highlights for the public carousel, in display order. */
 export async function getPublicHighlights() {

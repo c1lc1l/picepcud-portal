@@ -72,7 +72,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
         return;
       }
       setActive((s) => ({ ...s, [highlight.id]: next }));
-      toast.success(next ? "Moment shown" : "Moment hidden");
+      toast.success(next ? "Post shown" : "Post hidden");
     });
   }
 
@@ -83,7 +83,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
       const result = await deleteHighlight(highlight.id);
       setToDelete(null);
       if ("error" in result) toast.error(result.error);
-      else toast.success("Moment removed");
+      else toast.success("Post removed");
     });
   }
 
@@ -91,7 +91,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Moments carousel</CardTitle>
+          <CardTitle>Posts</CardTitle>
           <CardAction>
             <Button
               variant="outline"
@@ -106,8 +106,9 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
         <CardContent>
           {!highlights.length ? (
             <p className="text-sm text-muted-foreground">
-              No moments yet. Add a past event or social post to feature
-              below Upcoming events on the homepage.
+              No posts yet. Add a past event or social post to feature in
+              &ldquo;Check these out!&rdquo; below Upcoming events on the
+              homepage.
             </p>
           ) : (
             <ul className="divide-y divide-border">
@@ -126,8 +127,13 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium text-brand-ink">
-                        {h.caption}
+                        {h.title || h.caption}
                       </p>
+                      {h.title && (
+                        <p className="truncate text-sm text-muted-foreground">
+                          {h.caption}
+                        </p>
+                      )}
                       <div className="flex items-center gap-2">
                         {h.link_url && (
                           <p className="truncate text-sm text-muted-foreground">
@@ -156,7 +162,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
                             size="icon-sm"
                             disabled={i === 0 || busyId !== null}
                             onClick={() => move(h, "up")}
-                            aria-label={`Move "${h.caption}" up`}
+                            aria-label={`Move "${h.title || h.caption}" up`}
                           >
                             <ArrowUpIcon />
                           </Button>
@@ -167,7 +173,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
                               i === highlights.length - 1 || busyId !== null
                             }
                             onClick={() => move(h, "down")}
-                            aria-label={`Move "${h.caption}" down`}
+                            aria-label={`Move "${h.title || h.caption}" down`}
                           >
                             <ArrowDownIcon />
                           </Button>
@@ -185,7 +191,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => setEditing({ mode: "edit", highlight: h })}
-                        aria-label={`Edit "${h.caption}"`}
+                        aria-label={`Edit "${h.title || h.caption}"`}
                       >
                         <PencilIcon />
                       </Button>
@@ -194,7 +200,7 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
                         size="icon-sm"
                         className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() => setToDelete(h)}
-                        aria-label={`Remove "${h.caption}"`}
+                        aria-label={`Remove "${h.title || h.caption}"`}
                       >
                         <Trash2Icon />
                       </Button>
@@ -229,10 +235,10 @@ export function HighlightsManager({ highlights }: { highlights: Highlight[] }) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Remove moment?</DialogTitle>
+            <DialogTitle>Remove post?</DialogTitle>
             <DialogDescription>
-              “{toDelete?.caption}” will be removed from the homepage
-              carousel.
+              “{toDelete?.title || toDelete?.caption}” will be removed from
+              &ldquo;Check these out!&rdquo; on the homepage.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -306,7 +312,7 @@ function HighlightForm({
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     if (!existing && !image) {
-      toast.error("Add an image for this moment");
+      toast.error("Add an image for this post");
       return;
     }
 
@@ -334,7 +340,7 @@ function HighlightForm({
         toast.error(result.error);
         return;
       }
-      toast.success(existing ? "Moment updated" : "Moment added");
+      toast.success(existing ? "Post updated" : "Post added");
       onDone();
     });
   }
@@ -342,11 +348,10 @@ function HighlightForm({
   return (
     <form onSubmit={handleSave} className="flex min-h-0 flex-1 flex-col">
       <DialogHeader className="border-b border-border p-4 pr-12">
-        <DialogTitle>
-          {existing ? "Edit moment" : "Add moment"}
-        </DialogTitle>
+        <DialogTitle>{existing ? "Edit post" : "Add post"}</DialogTitle>
         <DialogDescription>
-          Shown in a carousel below Upcoming events on the homepage.
+          Shown in &ldquo;Check these out!&rdquo; below Upcoming events on the
+          homepage.
         </DialogDescription>
       </DialogHeader>
 
@@ -375,7 +380,7 @@ function HighlightForm({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={shownImage}
-                  alt="Moment preview"
+                  alt="Post preview"
                   className="max-h-32 rounded-md object-contain"
                 />
                 <span>Click to replace</span>
@@ -402,6 +407,17 @@ function HighlightForm({
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="title">Title (optional)</Label>
+          <Input
+            id="title"
+            name="title"
+            defaultValue={existing?.title ?? ""}
+            maxLength={120}
+            placeholder="e.g. PICESIKLABAN 2026"
+            className="h-9"
+          />
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="caption">Caption</Label>
           <Textarea
             id="caption"
@@ -423,7 +439,7 @@ function HighlightForm({
             className="h-9"
           />
           <p className="text-xs text-muted-foreground">
-            e.g. the Facebook or Instagram post this moment came from.
+            e.g. the Facebook or Instagram post this came from.
           </p>
         </div>
       </div>

@@ -37,7 +37,7 @@ export function HighlightsCarousel({ highlights }: { highlights: Highlight[] }) 
           variant="outline"
           size="icon-sm"
           onClick={() => scrollByCard(-1)}
-          aria-label="Scroll moments left"
+          aria-label="Scroll posts left"
         >
           <ArrowLeftIcon />
         </Button>
@@ -46,7 +46,7 @@ export function HighlightsCarousel({ highlights }: { highlights: Highlight[] }) 
           variant="outline"
           size="icon-sm"
           onClick={() => scrollByCard(1)}
-          aria-label="Scroll moments right"
+          aria-label="Scroll posts right"
         >
           <ArrowRightIcon />
         </Button>

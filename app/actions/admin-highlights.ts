@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 export type HighlightActionResult = { error: string } | { success: true };
 
 const highlightSchema = z.object({
+  title: z.string().trim().max(120, "Keep the title under 120 characters").optional(),
   caption: z.string().trim().min(1, "Caption is required").max(300),
   linkUrl: z
     .union([
@@ -57,15 +58,16 @@ export async function createHighlight(
   formData: FormData,
 ): Promise<HighlightActionResult> {
   if (!(await requireAdmin()))
-    return { error: "Only admins can add highlights" };
+    return { error: "Only admins can add posts" };
 
   const parsed = highlightSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const { caption, linkUrl, imagePath } = parsed.data;
-  if (!imagePath) return { error: "Add an image for this highlight" };
+  const { title, caption, linkUrl, imagePath } = parsed.data;
+  if (!imagePath) return { error: "Add an image for this post" };
 
   const supabase = await createClient();
   const { error } = await supabase.from("highlights").insert({
+    title: title || null,
     caption,
     link_url: linkUrl || null,
     image_path: imagePath,
@@ -83,11 +85,11 @@ export async function updateHighlight(
   formData: FormData,
 ): Promise<HighlightActionResult> {
   if (!(await requireAdmin()))
-    return { error: "Only admins can edit highlights" };
+    return { error: "Only admins can edit posts" };
 
   const parsed = highlightSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const { caption, linkUrl, imagePath } = parsed.data;
+  const { title, caption, linkUrl, imagePath } = parsed.data;
 
   const supabase = await createClient();
   const { data: current } = await supabase
@@ -95,11 +97,12 @@ export async function updateHighlight(
     .select("image_path")
     .eq("id", id)
     .maybeSingle();
-  if (!current) return { error: "Highlight not found" };
+  if (!current) return { error: "Post not found" };
 
   const { error } = await supabase
     .from("highlights")
     .update({
+      title: title || null,
       caption,
       link_url: linkUrl || null,
       ...(imagePath ? { image_path: imagePath } : {}),
@@ -120,7 +123,7 @@ export async function toggleHighlightStatus(
   isActive: boolean,
 ): Promise<HighlightActionResult> {
   if (!(await requireAdmin()))
-    return { error: "Only admins can update highlights" };
+    return { error: "Only admins can update posts" };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -130,7 +133,7 @@ export async function toggleHighlightStatus(
     .select("id")
     .maybeSingle();
   if (error) return { error: error.message };
-  if (!data) return { error: "Highlight not found" };
+  if (!data) return { error: "Post not found" };
 
   revalidateHighlights();
   return { success: true };
@@ -140,7 +143,7 @@ export async function deleteHighlight(
   id: string,
 ): Promise<HighlightActionResult> {
   if (!(await requireAdmin()))
-    return { error: "Only admins can delete highlights" };
+    return { error: "Only admins can delete posts" };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -150,7 +153,7 @@ export async function deleteHighlight(
     .select("image_path")
     .maybeSingle();
   if (error) return { error: error.message };
-  if (!data) return { error: "Highlight not found" };
+  if (!data) return { error: "Post not found" };
 
   await removeImage(data.image_path);
 
@@ -164,7 +167,7 @@ export async function moveHighlight(
   direction: "up" | "down",
 ): Promise<HighlightActionResult> {
   if (!(await requireAdmin()))
-    return { error: "Only admins can reorder highlights" };
+    return { error: "Only admins can reorder posts" };
 
   const supabase = await createClient();
   const { data: rows, error } = await supabase
@@ -175,7 +178,7 @@ export async function moveHighlight(
   if (error || !rows) return { error: error?.message ?? "Could not reorder" };
 
   const index = rows.findIndex((h) => h.id === id);
-  if (index === -1) return { error: "Highlight not found" };
+  if (index === -1) return { error: "Post not found" };
   const swapWith = direction === "up" ? index - 1 : index + 1;
   if (swapWith < 0 || swapWith >= rows.length) return { success: true };
   [rows[index], rows[swapWith]] = [rows[swapWith], rows[index]];

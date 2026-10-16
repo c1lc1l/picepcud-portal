@@ -8,6 +8,7 @@ import { FeaturedPostSection } from "@/components/site/FeaturedPostSection";
 import { HighlightsCarousel } from "@/components/site/HighlightsCarousel";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { WaveOrnament } from "@/components/site/WaveOrnament";
 import { homeContent } from "@/lib/content/home";
 import { getUpcomingEvents } from "@/lib/events";
 import { getFeaturedPost } from "@/lib/featured";
@@ -143,7 +144,7 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Moments — past events and social posts, admin-curated. */}
+        {/* Check these out — past events and social posts, admin-curated. */}
         {highlights && highlights.length > 0 && (
           <section
             aria-labelledby="highlights-heading"
@@ -154,7 +155,7 @@ export default async function Home() {
                 id="highlights-heading"
                 className="font-headline text-6xl leading-none uppercase text-brand-ink md:text-7xl"
               >
-                Moments
+                Check these out!
               </h2>
               <hr className="chrome-rule mt-5 mb-10" />
               <HighlightsCarousel highlights={highlights} />
@@ -166,9 +167,13 @@ export default async function Home() {
         {executive.length > 0 && (
           <section
             aria-labelledby="officers-heading"
-            className="border-t border-border bg-white/50"
+            className="relative overflow-hidden border-t border-border bg-white/50"
           >
-            <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 md:py-24">
+            {/* Emblem waves + pillars framing the board; only where the
+                margins are wide enough to clear the cards. */}
+            <WaveOrnament className="pointer-events-none absolute inset-y-0 left-2 hidden text-brand-violet/30 mask-[linear-gradient(180deg,transparent,black_18%,black_82%,transparent)] min-[1400px]:block" />
+            <WaveOrnament className="pointer-events-none absolute inset-y-0 right-2 hidden -scale-x-100 text-brand-violet/30 mask-[linear-gradient(180deg,transparent,black_18%,black_82%,transparent)] min-[1400px]:block" />
+            <div className="relative mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 md:py-24">
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <h2
